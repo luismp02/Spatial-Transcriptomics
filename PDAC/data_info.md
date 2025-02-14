@@ -1,11 +1,6 @@
 # PDAC datashare overview
 
-## Data Directory
-```
-user@f-dahu:/bettik/PROJECTS/pr-epimed/martinpl/projects/datashare/
-```
-
-### Visium data
+## Visium data
 Primary datasets stored in the following path (bettik path to be updated):
 
 ```
