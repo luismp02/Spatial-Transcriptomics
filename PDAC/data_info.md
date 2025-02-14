@@ -28,7 +28,7 @@ This directory contains 12 samples, each corresponding to a different experiment
 
 Each sample directory contains key output files organized in subdirectories:
 
-### Filtered Feature Barcode Matrix
+#### Filtered Feature Barcode Matrix
 Path: `/outs/filtered_feature_bc_matrix/`
 
 | File | Description |
@@ -37,7 +37,7 @@ Path: `/outs/filtered_feature_bc_matrix/`
 | `features.tsv.gz` | List of detected features (genes) |
 | `matrix.mtx.gz` | Matrix of feature counts per barcode |
 
-### Spatial Data
+#### Spatial Data
 Path: `/outs/spatial/`
 
 | File | Description |
