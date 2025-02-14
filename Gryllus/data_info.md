@@ -1,5 +1,7 @@
 # Gryllus datashare Overview
 
+* /bettik path to be updated
+
 ## Base Paths
 
 | Path | Description |
