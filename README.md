@@ -40,7 +40,7 @@ spatial-transcriptomics/
 
 **Clone the repository**:
    ```bash
-   git clone https://github.com/yourusername/spatial-transcriptomics-project.git
+   git clone https://github.com/yourusername/Spatial-Transcriptomic.git
    cd spatial-transcriptomics-project
    ```
 
