@@ -33,16 +33,14 @@ features['gene_id'] = features['gene_id'].str.slice(0, 9)
 for df in [genes_growth, genes_regen_up, genes_regen_down, genes_scarring]:
     df[df.columns[0]] = df[df.columns[0]].str.replace(r'\t', '', regex=True).str.strip().str.lower()
 
-# Create AnnData object 
+# Create AnnData object with index setting 
+# IMPORTANT: verify if your data works with gene_name or gene_id
 adata = anndata.AnnData(X=matrix.T, obs=barcodes, var=features.set_index('gene_id'))
 adata.var.index = adata.var.index.str.slice(0, 9)
-
-# Index setting (IMPORTANT: verify if your data works with gene_name or gene_id)
 genes_regen_up = genes_regen_up.set_index('gene_name')
 genes_regen_down = genes_regen_down.set_index('gene_name')
 genes_scarring = genes_scarring.set_index('gene_name')
 
-# Create sections in adata.var for gene analysis categories
 adata.var['growth_gene'] = adata.var.index.isin(genes_scarring.index)
 adata.var['regen_up_gene'] = adata.var.index.isin(genes_regen_up.index)
 adata.var['regen_down_gene'] = adata.var.index.isin(genes_regen_down.index)
