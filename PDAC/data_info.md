@@ -48,7 +48,7 @@ Path: `/outs/spatial/`
 
 
 ## Reference Data
-* Reference data
+* Single cell reference files from public data 
 ```
 user@f-dahu:/bettik/PROJECTS/pr-epimed/martinpl/projects/datashare/sc_PDAC
 ```
