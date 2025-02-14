@@ -14,7 +14,7 @@ Each project contains:
 ## Repository Structure
 
 ```
-spatial-transcriptomics-project/
+spatial-transcriptomics/
 │-- README.md
 │-- PDAC/
 │   │-- README.md
