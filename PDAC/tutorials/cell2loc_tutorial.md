@@ -103,7 +103,7 @@ import cell2location
 from matplotlib import rcParams
 ```
 
-#### Execution in cluster Luke (CPU)
+#### Execution in cluster Dahu (CPU)
 
 While CPU execution is possible, it is generally discouraged due to the performance limitations. If you opt to use a CPU, ensure that you modify the `accelerator_connector.py` to use the CPU backend to avoid compatibility issues. A tutorial can be followed here: https://github.com/Lightning-AI/pytorch-lightning/issues/13991
 
