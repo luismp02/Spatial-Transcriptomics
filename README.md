@@ -8,7 +8,7 @@ This repository contains workflows, tutorials, and scripts for two projects:
 Each project contains:
 
 - **Tutorials**: for installing and using ST tools (10xSpaceRanger, cell2location, GPU cluster)
-- **Scripts**: DONE: loading data, integrating data, processing images, and integrating single-cell reference datasets.
+- **Scripts**: IN PROGRESS: loading data, integrating data, processing images, and integrating single-cell reference datasets.
 - **Data Information**: Details on datashare of each project
 
 **Clone the repository**:
