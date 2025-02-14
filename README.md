@@ -20,25 +20,22 @@ spatial-transcriptomics-project/
 │   │-- README.md
 │   │-- data_info.md
 │   │-- tutorials/
-│   │   │-- space_ranger.md
-│   │   │-- inputs_outputs.md
 │   │   │-- installing_cell2location.md
 │   │-- scripts/
-│   │   │-- load_data.py
-│   │   │-- load_sc_reference.py
-│   │   │-- read_images.py
+│   │   │-- 01_load_data.py
+│   │   │-- 02_load_sc_reference.py
+│   │   │-- 03_exploratory_analysis
 │
 │-- Gryllus/
 │   │-- README.md
 │   │-- data_info.md
 │   │-- tutorials/
 │   │   │-- space_ranger.md
-│   │   │-- inputs_outputs.md
-│   │   │-- installing_cell2location.md
+│   │   │-- data_integration.md
 │   │-- scripts/
-│   │   │-- load_data.py
-│   │   │-- load_sc_reference.py
-│   │   │-- read_images.py
+│   │   │-- 01_load_data.py
+│   │   │-- 02_integration.py
+│   │   │-- 03_gene_info_analysis.py
 ```
 
 **Clone the repository**:
