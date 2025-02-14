@@ -58,6 +58,7 @@ regen_down_cells_positions = adata.obs.loc[regen_down_cells_expr, ['X_pixel', 'Y
 scarring_cells_positions = adata.obs.loc[scarring_cells_expr, ['X_pixel', 'Y_pixel']]
 
 # Set image orientation: it may change depending on the original rotation and transposition.
+# HERE TRANSPOSITION FOR MIRRORED IMAGE + 90 DEGREES ROTATION
 for positions in [growth_cells_positions, regen_up_cells_positions, regen_down_cells_positions, scarring_cells_positions]:
     positions[['X_pixel', 'Y_pixel']] = positions[['Y_pixel', 'X_pixel']].values
     positions['X_pixel'], positions['Y_pixel'] = positions['Y_pixel'], img.size[1] - positions['X_pixel']
