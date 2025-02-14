@@ -17,7 +17,5 @@ Each project contains:
    cd spatial-transcriptomics-project
    ```
 
-## License
 
-***
 
