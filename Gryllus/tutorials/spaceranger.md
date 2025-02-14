@@ -116,7 +116,7 @@ awk 'BEGIN {FS=OFS="\t"} {if (NF == 9) print $0}' Gbi_Genes.gtf > Gbi_Genes_clea
   --create-bam=false
 ```
 
-## Outputs overview
+## Output overview
 
 | Output                        | Description                                                                 |
 |-------------------------------|-----------------------------------------------------------------------------|
