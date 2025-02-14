@@ -52,7 +52,7 @@ Path: `/outs/spatial/`
 | `tissue_positions.csv` | CSV file mapping barcodes to spatial coordinates |
 
 
-#### Reference Data
+## Reference Data
 * Reference data
 ```
 user@f-dahu:/bettik/PROJECTS/pr-epimed/martinpl/projects/datashare/sc_PDAC
