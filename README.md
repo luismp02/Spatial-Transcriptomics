@@ -11,33 +11,6 @@ Each project contains:
 - **Scripts**: DONE: loading data, integrating data, processing images, and integrating single-cell reference datasets.
 - **Data Information**: Details on datashare of each project
 
-## Repository Structure
-
-```
-spatial-transcriptomics/
-│-- README.md
-│-- PDAC/
-│   │-- README.md
-│   │-- data_info.md
-│   │-- tutorials/
-│   │   │-- installing_cell2location.md
-│   │-- scripts/
-│   │   │-- 01_load_data.py
-│   │   │-- 02_load_sc_reference.py
-│   │   │-- 03_exploratory_analysis
-│
-│-- Gryllus/
-│   │-- README.md
-│   │-- data_info.md
-│   │-- tutorials/
-│   │   │-- space_ranger.md
-│   │   │-- data_integration.md
-│   │-- scripts/
-│   │   │-- 01_load_data.py
-│   │   │-- 02_integration.py
-│   │   │-- 03_gene_info_analysis.py
-```
-
 **Clone the repository**:
    ```bash
    git clone https://github.com/yourusername/Spatial-Transcriptomic.git
@@ -46,5 +19,5 @@ spatial-transcriptomics/
 
 ## License
 
-...
+***
 
