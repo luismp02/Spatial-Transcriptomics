@@ -1,6 +1,7 @@
 # Gryllus datashare Overview
 
-* /bettik path to be updated
+* /bettik path: user@f-dahu:/bettik/PROJECTS/pr-epimed/martinpl/projects/datashare/grillus
+
 
 ## Base paths in the storage cluster bettik
 
