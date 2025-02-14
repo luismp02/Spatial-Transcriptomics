@@ -2,11 +2,11 @@
 
 ## Data Directory
 
-The primary dataset is stored in the following path (bettik path to be updated):
+Primary dataset stored in the following path (bettik path to be updated):
 ```
 ~/projects/datashare/visium_PDAC
 ```
-This directory contains multiple samples, each corresponding to a different experiment:
+This directory contains 12 samples, each corresponding to a different experiment:
 
 | Sample Directory | Description |
 |------------------|-------------|
@@ -69,5 +69,4 @@ This directory contains two main datasets:
 |-----------|-------|
 | GSM7502530 | `barcodes.tsv.gz`, `features.tsv.gz`, `matrix.mtx.gz` |
 
-This structure ensures that all required spatial transcriptomics data and reference datasets are clearly documented and accessible for analysis.
 
