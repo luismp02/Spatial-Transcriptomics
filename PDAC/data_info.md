@@ -1,11 +1,17 @@
 # PDAC datashare overview
 
 ## Data Directory
+```
+user@f-dahu:/bettik/PROJECTS/pr-epimed/martinpl/projects/datashare/
+```
 
-Primary dataset stored in the following path (bettik path to be updated):
+### Visium data
+Primary datasets stored in the following path (bettik path to be updated):
+
 ```
-~/projects/datashare/visium_PDAC
+user@f-dahu:/bettik/PROJECTS/pr-epimed/martinpl/projects/datashare/visium_PDAC
 ```
+
 This directory contains 12 samples, each corresponding to a different experiment:
 
 | Sample Directory | Description |
@@ -23,7 +29,7 @@ This directory contains 12 samples, each corresponding to a different experiment
 | Visium_FFPE_V44L22-378_A | FFPE sample ID V44L22-378 (A) |
 | Visium_FFPE_V44L23-391_A | FFPE sample ID V44L23-391 (A) |
 
-## Sample Structure
+### Sample Structure
 
 Each sample directory contains key output files organized in subdirectories:
 
@@ -45,11 +51,11 @@ Path: `/outs/spatial/`
 | `scalefactors_json.json` | JSON file containing scaling factors for spatial mapping |
 | `tissue_positions.csv` | CSV file mapping barcodes to spatial coordinates |
 
-## Reference Data
 
-Reference single-cell datasets are stored in:
+#### Reference Data
+* Reference data
 ```
-../datashare/sc_PDAC
+user@f-dahu:/bettik/PROJECTS/pr-epimed/martinpl/projects/datashare/sc_PDAC
 ```
 This directory contains two main datasets:
 
