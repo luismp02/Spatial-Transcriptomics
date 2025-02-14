@@ -13,7 +13,7 @@ Each project contains:
 
 **Clone the repository**:
    ```bash
-   git clone https://github.com/yourusername/Spatial-Transcriptomic.git
+   git clone https://github.com/yourusername/Spatial-Transcriptomics.git
    cd spatial-transcriptomics-project
    ```
 
