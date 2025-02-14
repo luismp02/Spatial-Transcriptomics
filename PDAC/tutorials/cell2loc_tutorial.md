@@ -83,8 +83,9 @@ results_folder = '/home/User/cell2location/results/'
 
 2. Modify the `batch_size` variable regarding your GPU power (default settings will lead to memory usage problems, `batch_size=500` gave a correct execution of the test)
 
+
 3. To load packages for cell2location execution I had to use this modification of the orignal code:
-4. 
+
 ```python
 import sys
 import subprocess
