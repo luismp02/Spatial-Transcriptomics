@@ -11,7 +11,7 @@ pip install -r requirements.txt
 
 ## Preprocessing
 
-GraphST generates a normalized gene expression matrix X containing the top 3,000 highly variables gene expression across the spots of interests using **Scanpy** (log tranformation + normalization).
+GraphST generates a normalized gene expression matrix X containing the top 3,000 highly variables gene expression across the spots of interests using **Scanpy** (2) (log tranformation + normalization).
 - **Note:** the Scanpy normalization divides the gene counts of each cell by the total count. Thus, it assumes that all regions have the same mRNA abundance.
 Based on spatial coordinates, a neighborhood graph G is built, where the k nearest spots are linked based on Euclidean distance. 
 - **Note 1**: Yahui Long et al. (1) described that the best performance was obtained with k=3. Thus, this parameter is fixed at 3 (see `constuct_interaction` and `construct_interaction_KNN` functions in `GraphST/GraphST/preprocess.py`).
@@ -30,11 +30,11 @@ Finally, a spatial gene expression matrix H<sub>s</sub> is constructed from the 
 
 ## Clustering
 
-Three clustering methods are proposed by GraphST, namely mclust, louvain and leiden.
+Three clustering methods are proposed by GraphST, namely mclust (3), louvain and leiden (4).
 
 ### mclust
 
-Mclust is a model-based clustering based on parameterized finite Gaussian mixture models.
+mclust is a model-based clustering based on parameterized finite Gaussian mixture models.
 The probability density of a spot y<sub>i</sub> is given by:
 
 $$
@@ -45,11 +45,24 @@ with G the number of clusters, \tau<sub>g</sub> the mixture probability (proport
 Note: **θ<sub>g</sub> is composed of μ<sub>g</sub> the mean vector and Σ<sub>g</sub> the covariance matrix.
 These parameters are estimated by **maximum likelihood estimation (MLE)** using the **Expectation-Maximizing (EM)** algorithm, with the E step corresponding to the calculation of the probability that y<sub>i</sub> belongs to the cluster g, and the M step that updates the parameters by maximizing the ponderate likelihood function. 
 
-### louvain
+### Louvain
 
-### leiden
+The louvain algorithm is a hierarchical graph-based clustering method that iteratively optimizes  modularity by merging nodes. **Modularity** measures the clustering quality, such as a network with high modularity has dense connections within the different communities but sparse connections between these communities. Thus, a neighborhood graph is generated, where the nearest spots are linked. At the beginning the method considers each node as a community. (1) The different combinations of pairwise community fusion are explored to identify the combination that optimizes the graph modularity. (2) Thus, nodes that belong to the same community are grouped together to create a new graph where the communities become the nodes. 
+ - **Note 1**: During the second steps, edges and loops are ponderated based on the number of edges inter and intra communities respectively.
+ - **Note 2**: 
+   
+### Leiden
+
+## Refinement
+
+Finally, GraphST proposes an optional method to reassign the spots to the same cluster that those of the surrounding spots within a defined radius.  
 
 ## References
 
-1 - GraphST: Spatially informed clustering, integration, and deconvolution of spatial transcriptomics with GraphST, 
-Nature communication, Yahui Long et al. 2023
+1 - GraphST: Spatially informed clustering, integration, and deconvolution of spatial transcriptomics with GraphST, Nature Communication, Yahui Long et al. 2023
+
+2- SCANPY: large-scale single-cell gene expression data analysis, Genome Biology, F.Alexander Wolf et al. 2018
+
+3 - mclust 5: clustering, classification and density estimation using Gaussian finite mixture models, The R Journal, Scrucca L et al. 2016
+
+4 - From Louvain to Leiden: guaranteeing weel-connected communities, Scientific Reports, V.A.Traag et al. 2019
