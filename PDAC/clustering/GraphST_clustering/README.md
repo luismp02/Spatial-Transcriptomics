@@ -53,7 +53,7 @@ Based on the spatial cooridnates, a neighborhood graph is generated where the ne
 
 (I) The nodes for which the combination increases locally the graph modularity are grouped into communities. 
 (II) Thus, nodes that belong to the same community are fusionned to create a new graph where the communities become the nodes. 
- - **Note 1**: During the second steps, edges and loops are ponderated based on the number of edges inter and intra communities respectively.
+ - **Note**: During the second steps, edges and loops are ponderated based on the number of edges inter and intra communities respectively.
 
    
 ### Leiden
