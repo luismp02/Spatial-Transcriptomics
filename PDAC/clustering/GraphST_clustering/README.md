@@ -63,7 +63,7 @@ Nevertheless, in the context where the node (A) acts as a bridge within the firs
 
 The Leiden algorithm addresses this issue by adding an intermediate step of refinement between (I) the iddentification of communities that increase modularity and (II) the fusion of nodes from the same community. This refinement step consists of aggregating well connected nodes from the previously defined community, preventing the formation of disconnected communities. Thus, sub-communities can be identified from a larger initial community. Finaly, the last step is applied on these sub-communities.
 
-![leiden_figures(figures/leiden_figure.png)
+![leiden_figures](figures/leiden_figure.png)
 
 
 
