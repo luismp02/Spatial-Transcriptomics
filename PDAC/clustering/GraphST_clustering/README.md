@@ -47,11 +47,22 @@ These parameters are estimated by **maximum likelihood estimation (MLE)** using 
 
 ### Louvain
 
-The louvain algorithm is a hierarchical graph-based clustering method that iteratively optimizes  modularity by merging nodes. **Modularity** measures the clustering quality, such as a network with high modularity has dense connections within the different communities but sparse connections between these communities. Thus, a neighborhood graph is generated, where the nearest spots are linked. At the beginning the method considers each node as a community. (1) The different combinations of pairwise community fusion are explored to identify the combination that optimizes the graph modularity. (2) Thus, nodes that belong to the same community are grouped together to create a new graph where the communities become the nodes. 
+The Louvain algorithm is a hierarchical graph-based clustering method that iteratively optimizes modularity by merging nodes. 
+**Modularity** measures the clustering quality by maximizing the difference between the actual and the expected number of edges in a community. Thus, a network with high modularity is composed by communities with more edges than expected (4).
+Based on the spatial cooridnates, a neighborhood graph is generated where the nearest spots are linked. At the beginning the method considers each node as a community. 
+
+(I) The nodes for which the combination increases locally the graph modularity are grouped into communities. 
+(II) Thus, nodes that belong to the same community are fusionned to create a new graph where the communities become the nodes. 
  - **Note 1**: During the second steps, edges and loops are ponderated based on the number of edges inter and intra communities respectively.
- - **Note 2**: 
+
    
 ### Leiden
+
+The Leiden algorithm was introduced to address a consistent drawback of the Louvain algorithm. Indeed, because the first phase of Louvain is based on local research of graph modularity increasing, a  community that increases the modularity can be identified initially. Nevertheless, a new community assignment that includes a node (A) from the previously identified community can be tested in a second time. If this new community increases the modularity more largely than the first one, node (A) will be merged with the nodes from the new community, whereas the other nodes from the first communities will be grouped together.
+Nevertheless, in the context where the node (A) acts as a bridge within the first community, removing it will create a badly connected community (with two isolated parts) that will be fusionned during the second step. 
+
+The Leiden algorithm addresses this issue by adding a intermediate step of refinement between (I) the research of communities that increase modularity and (II) the fusion of nodes from the same community. 
+
 
 ## Refinement
 
