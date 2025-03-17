@@ -58,13 +58,14 @@ Based on the spatial cooridnates, a neighborhood graph is generated where the ne
    
 ### Leiden
 
-The Leiden algorithm was introduced to address a consistent drawback of the Louvain algorithm. Indeed, because the first phase of Louvain is based on local research of graph modularity increasing, a  community that increases the modularity can be identified initially. Nevertheless, a new community assignment that includes a node (A) from the previously identified community can be tested in a second time. If this new community increases the modularity more largely than the first one, node (A) will be merged with the nodes from the new community, whereas the other nodes from the first communities will be grouped together.
+The Leiden algorithm was introduced to address a consistent drawback of the Louvain algorithm. Indeed, because the first phase of Louvain is based on local research of graph modularity increasing, a  community that increases the modularity can be identified initially. Nevertheless, a new community assignment that includes a node (A) from the previously identified community can be tested in a second time (Fig - Leiden Correction). If this new community increases the modularity more largely than the first one, node (A) will be merged with the nodes from the new community, whereas the other nodes from the first communities will be grouped together.
 Nevertheless, in the context where the node (A) acts as a bridge within the first community, removing it will create a badly connected community (with two isolated parts) that will be fusionned during the second step. 
 
 The Leiden algorithm addresses this issue by adding an intermediate step of refinement between (I) the iddentification of communities that increase modularity and (II) the fusion of nodes from the same community. This refinement step consists of aggregating well connected nodes from the previously defined community, preventing the formation of disconnected communities. Thus, sub-communities can be identified from a larger initial community. Finaly, the last step is applied on these sub-communities.
 
 ![leiden_figures](figures/leiden_figure.png)
 
+**Leiden Correction**
 
 
 ## Refinement
