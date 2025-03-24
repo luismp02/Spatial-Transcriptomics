@@ -49,9 +49,8 @@ These parameters are estimated by **maximum likelihood estimation (MLE)** using 
 ### Louvain
 
 The Louvain algorithm is a hierarchical graph-based clustering method that iteratively optimizes modularity by merging nodes. 
-**Modularity** measures the clustering quality by maximizing the difference between the actual and the expected number of edges in a community. Thus, a network with high modularity is composed by communities with more edges than expected (4).
-Based on the spatial cooridnates, a neighborhood graph is generated where the nearest spots are linked. At the beginning the method considers each node as a community. 
-
+**Modularity** measures the clustering quality by maximizing the difference between the actual and the expected number of edges in a community. Thus, a network with high modularity is composed by communities with more edges than expected (4).  
+Based on the spatial cooridnates, a neighborhood graph is generated where the nearest spots are linked. At the beginning the method considers each node as a community.
 (I) The nodes for which the combination increases locally the graph modularity are grouped into communities. 
 (II) Thus, nodes that belong to the same community are fusionned to create a new graph where the communities become the nodes. 
  - **Note**: During the second steps, edges and loops are ponderated based on the number of edges inter and intra communities respectively.
