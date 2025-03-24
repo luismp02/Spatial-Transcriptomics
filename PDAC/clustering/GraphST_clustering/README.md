@@ -41,8 +41,8 @@ $$
 p(y_i) = \sum_{g=1}^{G} \tau_g f_g(y_i | \theta_g)
 $$
 
-with G the number of clusters, \tau<sub>g</sub> the mixture probability (proportion of points in cluster g) and f<sub>g</sub> the multivariate normal distribution function.
-Note: **θ<sub>g</sub> is composed of μ<sub>g</sub> the mean vector and Σ<sub>g</sub> the covariance matrix.
+with G the number of clusters, \( \tau_g \) the mixture probability (proportion of points in cluster g) and f<sub>g</sub> the multivariate normal distribution function.
+**Note**: θ<sub>g</sub> is composed of μ<sub>g</sub> the mean vector and Σ<sub>g</sub> the covariance matrix.
 These parameters are estimated by **maximum likelihood estimation (MLE)** using the **Expectation-Maximizing (EM)** algorithm, with the E step corresponding to the calculation of the probability that y<sub>i</sub> belongs to the cluster g, and the M step that updates the parameters by maximizing the ponderate likelihood function. 
 
 ### Louvain
@@ -74,7 +74,7 @@ GraphST proposes an optional method to reassign the spots to the same cluster th
 
 1 - GraphST: Spatially informed clustering, integration, and deconvolution of spatial transcriptomics with GraphST, Nature Communication, Yahui Long et al. 2023
 
-2- SCANPY: large-scale single-cell gene expression data analysis, Genome Biology, F.Alexander Wolf et al. 2018
+2 - SCANPY: large-scale single-cell gene expression data analysis, Genome Biology, F.Alexander Wolf et al. 2018
 
 3 - mclust 5: clustering, classification and density estimation using Gaussian finite mixture models, The R Journal, Scrucca L et al. 2016
 
