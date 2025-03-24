@@ -41,7 +41,7 @@ $$
 p(y_i) = \sum_{g=1}^{G} \tau_g f_g(y_i | \theta_g)
 $$
 
-with G the number of clusters, \( \tau_g \) the mixture probability (proportion of points in cluster g) and f<sub>g</sub> the multivariate normal distribution function.
+with G the number of clusters, τ<sub>g</sub> the mixture probability (proportion of points in cluster g) and f<sub>g</sub> the multivariate normal distribution function.
 **Note**: θ<sub>g</sub> is composed of μ<sub>g</sub> the mean vector and Σ<sub>g</sub> the covariance matrix.
 These parameters are estimated by **maximum likelihood estimation (MLE)** using the **Expectation-Maximizing (EM)** algorithm, with the E step corresponding to the calculation of the probability that y<sub>i</sub> belongs to the cluster g, and the M step that updates the parameters by maximizing the ponderate likelihood function. 
 
