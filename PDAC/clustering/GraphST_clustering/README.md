@@ -13,6 +13,7 @@ pip install -r requirements.txt
 
 GraphST generates a normalized gene expression matrix X containing the top 3,000 highly variables gene expression across the spots of interests using **Scanpy** (2) (log tranformation + normalization).
 - **Note:** the Scanpy normalization divides the gene counts of each cell by the total count. Thus, it assumes that all regions have the same mRNA abundance.
+
 Based on spatial coordinates, a neighborhood graph G is built, where the k nearest spots are linked based on Euclidean distance. 
 - **Note 1**: Yahui Long et al. (1) described that the best performance was obtained with k=3. Thus, this parameter is fixed at 3 (see `constuct_interaction` and `construct_interaction_KNN` functions in `GraphST/GraphST/preprocess.py`).
 - **Note 2**: In cases where more than 3 spots are equidistant from the spot of interest, the first 3 neighbors in the order of the distance matrix are selected. 
@@ -41,8 +42,8 @@ $$
 p(y_i) = \sum_{g=1}^{G} \tau_g f_g(y_i | \theta_g)
 $$
 
-with G the number of clusters, τ<sub>g</sub> the mixture probability (proportion of points in cluster g) and f<sub>g</sub> the multivariate normal distribution function.
-**Note**: θ<sub>g</sub> is composed of μ<sub>g</sub> the mean vector and Σ<sub>g</sub> the covariance matrix.
+with G the number of clusters, τ<sub>g</sub> the mixture probability (proportion of points in cluster g) and f<sub>g</sub> the multivariate normal distribution function.  
+- **Note**: θ<sub>g</sub> is composed of μ<sub>g</sub> the mean vector and Σ<sub>g</sub> the covariance matrix.  
 These parameters are estimated by **maximum likelihood estimation (MLE)** using the **Expectation-Maximizing (EM)** algorithm, with the E step corresponding to the calculation of the probability that y<sub>i</sub> belongs to the cluster g, and the M step that updates the parameters by maximizing the ponderate likelihood function. 
 
 ### Louvain
