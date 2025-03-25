@@ -37,6 +37,7 @@ def silhouette_metrics(ax, adata, n_clusters):
    ##### SILHOUETTE SCORE ######
    X = adata.obsm['emb_pca']
    cluster_labels = adata.obs[f'domain_{n_clusters}'].cat.codes.to_numpy()
+   print(cluster_labels)
    silhouette_avg = silhouette_score(X, cluster_labels)
    sample_silhouette_values = silhouette_samples(X, cluster_labels)
    
@@ -127,6 +128,7 @@ def n_cluster_loop(adata, methods, n_clusters_list, refinement=True, filename=No
         for method in methods:
             #removing of domain columns 
             domain_columns = [col for col in adata.obs.columns if col.startswith('domain_')]
-            adata.obs.drop(columns=domain_columns, inplace=True)
-            execute_all(adata, method, n_clusters_list)
+            if domain_columns: #check if there is a column that begins with 'domain'
+                adata.obs.drop(columns=domain_columns, inplace=True)
+            execute_all(adata, method, n_clusters_list, refinement)
             

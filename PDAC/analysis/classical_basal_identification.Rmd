@@ -84,3 +84,21 @@ map2 <- SpatialFeaturePlot(obj, features = signature.names[2], pt.size.factor = 
 
 wrap_plots(map1, map2)
 ```
+## Filtering based on specific markers
+```{r}
+clrn3_pos <- colnames(normalized_data@assays$Spatial["counts"])[normalized_data@assays$Spatial["counts"]["CLRN3", ] > 1]
+
+dhrs9_pos <- colnames(normalized_data@assays$Spatial["counts"])[normalized_data@assays$Spatial["counts"]["DHRS9", ] > 13]
+
+tns4_pos <- colnames(normalized_data@assays$Spatial["counts"])[normalized_data@assays$Spatial["counts"]["TNS4", ] > 7]
+
+sprr1b_pos <- colnames(normalized_data@assays$Spatial["counts"])[normalized_data@assays$Spatial["counts"]["SPRR1B", ] > 5]
+
+scel_pos <- colnames(normalized_data@assays$Spatial["counts"])[normalized_data@assays$Spatial["counts"]["SCEL", ] > 3]
+
+sprr3_pos <- colnames(normalized_data@assays$Spatial["counts"])[normalized_data@assays$Spatial["counts"]["SPRR3", ] > 5]
+
+krt6a_pos <- colnames(normalized_data@assays$Spatial["counts"])[normalized_data@assays$Spatial["counts"]["KRT6A", ] > 21]
+
+fam83a_pos <- colnames(normalized_data@assays$Spatial["counts"])[normalized_data@assays$Spatial["counts"]["FAM83A", ] > 7]
+```
