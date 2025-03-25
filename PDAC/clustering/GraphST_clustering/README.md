@@ -13,6 +13,7 @@ pip install -r requirements.txt
 
 GraphST generates a normalized gene expression matrix X containing the top 3,000 highly variables gene expression across the spots of interests using **Scanpy** (2) (log tranformation + normalization).
 - **Note:** the Scanpy normalization divides the gene counts of each cell by the total count. Thus, it assumes that all regions have the same mRNA abundance.
+
 Based on spatial coordinates, a neighborhood graph G is built, where the k nearest spots are linked based on Euclidean distance. 
 - **Note 1**: Yahui Long et al. (1) described that the best performance was obtained with k=3. Thus, this parameter is fixed at 3 (see `constuct_interaction` and `construct_interaction_KNN` functions in `GraphST/GraphST/preprocess.py`).
 - **Note 2**: In cases where more than 3 spots are equidistant from the spot of interest, the first 3 neighbors in the order of the distance matrix are selected. 
@@ -41,16 +42,15 @@ $$
 p(y_i) = \sum_{g=1}^{G} \tau_g f_g(y_i | \theta_g)
 $$
 
-with G the number of clusters, \tau<sub>g</sub> the mixture probability (proportion of points in cluster g) and f<sub>g</sub> the multivariate normal distribution function.
-Note: **θ<sub>g</sub> is composed of μ<sub>g</sub> the mean vector and Σ<sub>g</sub> the covariance matrix.
+with G the number of clusters, τ<sub>g</sub> the mixture probability (proportion of points in cluster g) and f<sub>g</sub> the multivariate normal distribution function.  
+- **Note**: θ<sub>g</sub> is composed of μ<sub>g</sub>  (mean vector) and Σ<sub>g</sub> (covariance matrix).  
 These parameters are estimated by **maximum likelihood estimation (MLE)** using the **Expectation-Maximizing (EM)** algorithm, with the E step corresponding to the calculation of the probability that y<sub>i</sub> belongs to the cluster g, and the M step that updates the parameters by maximizing the ponderate likelihood function. 
 
 ### Louvain
 
 The Louvain algorithm is a hierarchical graph-based clustering method that iteratively optimizes modularity by merging nodes. 
-**Modularity** measures the clustering quality by maximizing the difference between the actual and the expected number of edges in a community. Thus, a network with high modularity is composed by communities with more edges than expected (4).
-Based on the spatial cooridnates, a neighborhood graph is generated where the nearest spots are linked. At the beginning the method considers each node as a community. 
-
+**Modularity** measures the clustering quality by maximizing the difference between the actual and the expected number of edges in a community. Thus, a network with high modularity is composed by communities with more edges than expected (4).  
+Based on the spatial cooridnates, a neighborhood graph is generated where the nearest spots are linked. At the beginning the method considers each node as a community.
 (I) The nodes for which the combination increases locally the graph modularity are grouped into communities. 
 (II) Thus, nodes that belong to the same community are fusionned to create a new graph where the communities become the nodes. 
  - **Note**: During the second steps, edges and loops are ponderated based on the number of edges inter and intra communities respectively.
@@ -58,13 +58,12 @@ Based on the spatial cooridnates, a neighborhood graph is generated where the ne
    
 ### Leiden
 
-The Leiden algorithm was introduced to address a consistent drawback of the Louvain algorithm. Indeed, because the first phase of Louvain is based on local research of graph modularity increasing, a  community that increases the modularity can be identified initially. Nevertheless, a new community assignment that includes a node (A) from the previously identified community can be tested in a second time. If this new community increases the modularity more largely than the first one, node (A) will be merged with the nodes from the new community, whereas the other nodes from the first communities will be grouped together.
+The Leiden algorithm was introduced to address a consistent drawback of the Louvain algorithm. Indeed, because the first phase of Louvain is based on local research of graph modularity increasing, a  community that increases the modularity can be identified initially. Nevertheless, a new community assignment that includes a node (A) from the previously identified community can be tested in a second time (see figure below). If this new community increases the modularity more largely than the first one, node (A) will be merged with the nodes from the new community, whereas the other nodes from the first communities will be grouped together.
 Nevertheless, in the context where the node (A) acts as a bridge within the first community, removing it will create a badly connected community (with two isolated parts) that will be fusionned during the second step. 
 
 The Leiden algorithm addresses this issue by adding an intermediate step of refinement between (I) the iddentification of communities that increase modularity and (II) the fusion of nodes from the same community. This refinement step consists of aggregating well connected nodes from the previously defined community, preventing the formation of disconnected communities. Thus, sub-communities can be identified from a larger initial community. Finaly, the last step is applied on these sub-communities.
 
 ![leiden_figures](figures/leiden_figure.png)
-
 
 
 ## Refinement
@@ -75,7 +74,7 @@ GraphST proposes an optional method to reassign the spots to the same cluster th
 
 1 - GraphST: Spatially informed clustering, integration, and deconvolution of spatial transcriptomics with GraphST, Nature Communication, Yahui Long et al. 2023
 
-2- SCANPY: large-scale single-cell gene expression data analysis, Genome Biology, F.Alexander Wolf et al. 2018
+2 - SCANPY: large-scale single-cell gene expression data analysis, Genome Biology, F.Alexander Wolf et al. 2018
 
 3 - mclust 5: clustering, classification and density estimation using Gaussian finite mixture models, The R Journal, Scrucca L et al. 2016
 
