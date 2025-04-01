@@ -80,7 +80,7 @@ plt.legend(labels=['full data training'])
 plt.savefig(f"{results_folder}/plot_history.png")  # Save plot_history figure
 plt.close()  # Close the figure to free memory
 
-# Renombrar la columna '_index' a 'features' dentro de '_raw' para evitar conflicto
+# Rename Index
 adata_ref.__dict__['_raw'].__dict__['_var'] = adata_ref.__dict__['_raw'].__dict__['_var'].rename(columns={'_index': 'features'})
 
 #export
