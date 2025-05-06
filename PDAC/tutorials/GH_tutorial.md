@@ -1,4 +1,4 @@
-```markdown
+
 # Tutorial: Installing `cell2location` with GPU support on ARM64 (GH200 Grace Hopper bigfoot Node)
 This guide walks you through setting up a complete environment for spatial transcriptomics using `cell2location`, compiled from source to support GPU execution on an **ARM64 (aarch64)** Grace Hopper (GH200) architecture with an Nvidia H100 GPU.
 Tested on:
