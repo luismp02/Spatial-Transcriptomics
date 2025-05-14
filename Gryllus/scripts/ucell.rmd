@@ -1,0 +1,200 @@
+---
+  title: "UCell Analysis Tutorial on Cricket Spatial Data"
+author: "Bioinformatics Lab"
+date: "`r Sys.Date()`"
+output: html_document
+---
+  
+  ```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+## 1. Load Required Libraries
+
+```{r libraries}
+library(UCell)
+library(Matrix)
+library(Seurat)
+library(dplyr)
+library(readr)
+library(stringr)
+library(ggplot2)
+library(jsonlite)
+library(png)
+```
+
+## 2. Set Paths and Load Seurat Object
+
+```{r paths}
+base_path <- "../../datashare/grillus"
+data_path <- file.path(base_path, "files")
+output_dir <- file.path("..", "results", "ucell")
+if (!dir.exists(output_dir)) dir.create(output_dir, recursive = TRUE)
+
+seurat_obj <- readRDS(file.path(base_path, "grillus_seurat.rds"))
+```
+
+## 3. Load Gene Signatures from CSV Files
+
+```{r gene-signatures-csv}
+read_gene_list <- function(file, gene_col = 1) {
+  df <- read_csv(file)
+  genes <- df[[gene_col]]
+  tolower(str_trim(gsub("_", "-", as.character(genes))))
+}
+
+genes_growth     <- read_gene_list(file.path(data_path, "de_gene_names_growth.csv"), gene_col = "gene_id")
+genes_regen_up   <- read_gene_list(file.path(data_path, "ur_regeneration.csv"), gene_col = "gene_name")
+genes_regen_down <- read_gene_list(file.path(data_path, "dr_regeneration.csv"), gene_col = "gene_name")
+genes_scarring   <- read_gene_list(file.path(data_path, "gene_name_scaring.csv"), gene_col = "gene_id")
+
+# Annotate gene features
+gene_annot <- seurat_obj@misc$gene_annotations
+
+add_flag <- function(genes) rownames(gene_annot) %in% genes
+
+gene_annot$growth_gene     <- add_flag(genes_growth)
+gene_annot$regen_up_gene   <- add_flag(genes_regen_up)
+gene_annot$regen_down_gene <- add_flag(genes_regen_down)
+gene_annot$scarring_gene   <- add_flag(genes_scarring)
+
+seurat_obj@misc$gene_annotations <- gene_annot
+```
+
+## 4. Calculate UCell Scores for CSV Gene Sets
+
+```{r ucell-csv}
+signatures <- list(
+  growth     = rownames(gene_annot)[gene_annot$growth_gene],
+  regen_up   = rownames(gene_annot)[gene_annot$regen_up_gene],
+  regen_down = rownames(gene_annot)[gene_annot$regen_down_gene],
+  scarring   = rownames(gene_annot)[gene_annot$scarring_gene]
+)
+
+for (sig in names(signatures)) {
+  seurat_obj <- AddModuleScore_UCell(
+    seurat_obj,
+    features = list(signatures[[sig]]),
+    name = paste0(sig, "UCell")
+  )
+}
+```
+
+## 5. Load and Attach Spatial Image
+
+```{r image}
+spatial_path <- file.path(base_path, "outs", "spatial")
+img_obj <- Read10X_Image(image.dir = spatial_path, filter.matrix = TRUE)
+colnames(img_obj) <- colnames(seurat_obj)
+
+DefaultImage(seurat_obj) <- "image"
+seurat_obj[["image"]] <- img_obj
+DefaultAssay(seurat_obj) <- "Spatial"
+```
+
+## 6. Visualize UCell Scores
+
+```{r plot-csv-scores}
+features_to_plot <- c("growthUCell", "regen_upUCell", "regen_downUCell", "scarringUCell")
+
+for (feat in features_to_plot) {
+  p <- SpatialFeaturePlot(
+    seurat_obj,
+    features = feat,
+    pt.size.factor = 3
+  ) + ggtitle(feat)
+  
+  ggsave(
+    filename = file.path(output_dir, paste0(feat, ".png")),
+    plot = p,
+    width = 6,
+    height = 6,
+    dpi = 300
+  )
+}
+```
+
+## 7. Additional Gene Sets from PDF (Pathways & Regulators)
+
+```{r pdf-signatures}
+# Example manually annotated gene sets from database list (mapped to gene IDs beforehand)
+signatures_interest <- list(
+  EGFR = c("gbi-12345", "gbi-12346"),
+  Dpp_TGFb = c("gbi-23456", "gbi-23457"),
+  Insulin_IGF = c("gbi-34567", "gbi-34568"),
+  Notch = c("gbi-45678", "gbi-45679"),
+  Toll = c("gbi-56789", "gbi-56780"),
+  TFs = c("gbi-67890", "gbi-67891"),
+  Methyl_Histone = c("gbi-78901", "gbi-78902"),
+  Chromatin_Remodeling = c("gbi-89012", "gbi-89013")
+)
+
+for (sig in names(signatures_interest)) {
+  seurat_obj <- AddModuleScore_UCell(
+    seurat_obj,
+    features = list(signatures_interest[[sig]]),
+    name = paste0("signature_1", sig)
+  )
+}
+```
+
+## 8. Visualize database-Informed Scores
+
+```{r plot-flybase-scores}
+ucell_feats <- grep("^signature_1", colnames(seurat_obj@meta.data), value = TRUE)
+
+for (feat in ucell_feats) {
+  p <- SpatialFeaturePlot(
+    seurat_obj,
+    features = feat,
+    pt.size.factor = 3
+  ) + ggtitle(feat)
+  
+  ggsave(
+    filename = file.path(output_dir, paste0("binary/", feat, ".png")),
+    plot = p,
+    width = 6,
+    height = 6,
+    dpi = 300
+  )
+}
+```
+
+## 10. Visualize database-Informed Scores (Binary)
+
+```{r plot-flybase-scores-binary}
+for (feat in ucell_feats) {
+  bin_feat <- seurat_obj@meta.data[[feat]] > 0
+  seurat_obj@meta.data[[paste0(feat, "_bin")]] <- factor(as.integer(bin_feat))
+
+  p <- SpatialFeaturePlot(
+    seurat_obj,
+    features = paste0(feat, "_bin"),
+    pt.size.factor = 3
+  ) + ggtitle(paste0(feat, " (Binary)"))
+
+  ggsave(
+    filename = file.path(binary_dir, paste0(feat, "_binary.png")),
+    plot = p,
+    width = 6,
+    height = 6,
+    dpi = 300
+  )
+}
+```
+
+## 11. Save Final Seurat Object
+
+```{r save-final}
+saveRDS(seurat_obj, file.path(base_path, "grillus_seurat_ucell_final.rds"))
+```
+
+---
+
+**Note:** Gene IDs are placeholders; replace with real mapped values when running on your dataset.
+
+**Next Steps:**
+- Add biological interpretation layers
+- Cross-species ontology mapping (e.g., via FlyBase, GO)
+- Combine UCell with clustering, pseudotime or region segmentation
+
