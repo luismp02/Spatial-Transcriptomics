@@ -1,11 +1,11 @@
 ---
-  title: "UCell Analysis Tutorial on Cricket Spatial Data"
+title: "UCell Analysis Tutorial on Cricket Spatial Data"
 author: "Bioinformatics Lab"
 date: "`r Sys.Date()`"
 output: html_document
 ---
   
-  ```{r setup, include=FALSE}
+```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 ```
 
@@ -64,6 +64,7 @@ seurat_obj@misc$gene_annotations <- gene_annot
 ## 4. Calculate UCell Scores for CSV Gene Sets
 
 ```{r ucell-csv}
+rownames(seurat_obj@meta.data) <- Cells(seurat_obj)
 signatures <- list(
   growth     = rownames(gene_annot)[gene_annot$growth_gene],
   regen_up   = rownames(gene_annot)[gene_annot$regen_up_gene],
@@ -74,8 +75,8 @@ signatures <- list(
 for (sig in names(signatures)) {
   seurat_obj <- AddModuleScore_UCell(
     seurat_obj,
-    features = list(signatures[[sig]]),
-    name = paste0(sig, "UCell")
+    features = signatures,
+    name = "UCell"
   )
 }
 ```
@@ -85,11 +86,18 @@ for (sig in names(signatures)) {
 ```{r image}
 spatial_path <- file.path(base_path, "outs", "spatial")
 img_obj <- Read10X_Image(image.dir = spatial_path, filter.matrix = TRUE)
-colnames(img_obj) <- colnames(seurat_obj)
 
-DefaultImage(seurat_obj) <- "image"
+# key and assay
+img_obj@key <- "image_"
+img_obj@assay <- "Spatial"
+
+# add image
 seurat_obj[["image"]] <- img_obj
 DefaultAssay(seurat_obj) <- "Spatial"
+
+# Verif
+Images(seurat_obj)
+
 ```
 
 ## 6. Visualize UCell Scores
@@ -133,7 +141,7 @@ for (sig in names(signatures_interest)) {
   seurat_obj <- AddModuleScore_UCell(
     seurat_obj,
     features = list(signatures_interest[[sig]]),
-    name = paste0("signature_1", sig)
+    name = paste0(sig, "_UCell")
   )
 }
 ```
@@ -141,7 +149,7 @@ for (sig in names(signatures_interest)) {
 ## 8. Visualize database-Informed Scores
 
 ```{r plot-flybase-scores}
-ucell_feats <- grep("^signature_1", colnames(seurat_obj@meta.data), value = TRUE)
+ucell_feats <- grep("_UCell$", colnames(seurat_obj@meta.data), value = TRUE)
 
 for (feat in ucell_feats) {
   p <- SpatialFeaturePlot(
@@ -151,28 +159,43 @@ for (feat in ucell_feats) {
   ) + ggtitle(feat)
   
   ggsave(
-    filename = file.path(output_dir, paste0("binary/", feat, ".png")),
+    filename = file.path(output_dir, paste0(feat, ".png")),
     plot = p,
     width = 6,
     height = 6,
     dpi = 300
   )
 }
+
 ```
 
 ## 10. Visualize database-Informed Scores (Binary)
 
 ```{r plot-flybase-scores-binary}
-for (feat in ucell_feats) {
-  bin_feat <- seurat_obj@meta.data[[feat]] > 0
-  seurat_obj@meta.data[[paste0(feat, "_bin")]] <- factor(as.integer(bin_feat))
 
+binary_dir <- file.path(output_dir, "binary")
+
+if (!dir.exists(binary_dir)) dir.create(binary_dir)
+threshold <- 0.15
+
+for (feat in ucell_feats) {
+  bin_col <- paste0(feat, "_bin")
+
+  seurat_obj@meta.data[[bin_col]] <- as.numeric(seurat_obj@meta.data[[feat]] > threshold)
+  
+  # Binary plot
   p <- SpatialFeaturePlot(
     seurat_obj,
-    features = paste0(feat, "_bin"),
+    features = bin_col,
     pt.size.factor = 3
-  ) + ggtitle(paste0(feat, " (Binary)"))
-
+  ) +
+    scale_fill_gradientn(
+      colours = c("grey90", "red3"),
+      limits = c(0, 1)
+    ) +
+    ggtitle(paste0(feat, " > ", threshold)) +
+    theme(plot.title = element_text(hjust = 0.5, size = 16))
+  
   ggsave(
     filename = file.path(binary_dir, paste0(feat, "_binary.png")),
     plot = p,
@@ -181,6 +204,7 @@ for (feat in ucell_feats) {
     dpi = 300
   )
 }
+
 ```
 
 ## 11. Save Final Seurat Object
@@ -197,4 +221,3 @@ saveRDS(seurat_obj, file.path(base_path, "grillus_seurat_ucell_final.rds"))
 - Add biological interpretation layers
 - Cross-species ontology mapping (e.g., via FlyBase, GO)
 - Combine UCell with clustering, pseudotime or region segmentation
-
