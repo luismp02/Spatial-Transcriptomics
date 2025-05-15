@@ -1,6 +1,6 @@
 ---
 title: "UCell Analysis Tutorial on Cricket Spatial Data"
-author: "Bioinformatics Lab"
+author: "Luis Martin Pena"
 date: "`r Sys.Date()`"
 output: html_document
 ---
