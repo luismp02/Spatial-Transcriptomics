@@ -23,7 +23,7 @@ library(jsonlite)
 library(png)
 ```
 
-## 2. Set Paths and Load Seurat Object
+## 2. Set Paths and Load Seurat Object from load_data.R
 
 ```{r paths}
 base_path <- "../../datashare/grillus"
@@ -34,7 +34,11 @@ if (!dir.exists(output_dir)) dir.create(output_dir, recursive = TRUE)
 seurat_obj <- readRDS(file.path(base_path, "grillus_seurat.rds"))
 ```
 
-## 3. Load Gene Signatures from CSV Files
+## 3. Load Gene Signatures from CSV Files. 
+
+* In this section we add labels to every functional annotation found in external files reference-based annotation from different studies (Pathways, metabolic process, epigenetic regulations, differentiation and regeneration-related functions.)
+
+* For homogenizing the data we convert every gene name into the same index format. Since the latest version of Seurat (V5) is unable to add new specific layers into the metadata we will add this layer of information in @misc
 
 ```{r gene-signatures-csv}
 read_gene_list <- function(file, gene_col = 1) {
@@ -63,6 +67,10 @@ seurat_obj@misc$gene_annotations <- gene_annot
 
 ## 4. Calculate UCell Scores for CSV Gene Sets
 
+* Refer to Ucell Score documentation for detail ( https://github.com/carmonalab/UCell).
+
+* We will get for the first analysis the 4 functional categories as signatures for our score in default parameters, we should see differentiated regions in the tissue even if high absolute scores are not expected.
+
 ```{r ucell-csv}
 rownames(seurat_obj@meta.data) <- Cells(seurat_obj)
 signatures <- list(
@@ -81,7 +89,9 @@ for (sig in names(signatures)) {
 }
 ```
 
-## 5. Load and Attach Spatial Image
+## 5. Load and Attach Spatial 
+
+* For a 10xVisium default data set we should charge the image with the Read10x function and then adding it as a layer in our object (key = image, spatial assay), any other image specification will result in an error.
 
 ```{r image}
 spatial_path <- file.path(base_path, "outs", "spatial")
@@ -102,6 +112,8 @@ Images(seurat_obj)
 
 ## 6. Visualize UCell Scores
 
+* First test for plotting, heatmap score.
+
 ```{r plot-csv-scores}
 features_to_plot <- c("growthUCell", "regen_upUCell", "regen_downUCell", "scarringUCell")
 
@@ -111,6 +123,8 @@ for (feat in features_to_plot) {
     features = feat,
     pt.size.factor = 3
   ) + ggtitle(feat)
+  
+  print(p)
   
   ggsave(
     filename = file.path(output_dir, paste0(feat, ".png")),
@@ -124,19 +138,100 @@ for (feat in features_to_plot) {
 
 ## 7. Additional Gene Sets from PDF (Pathways & Regulators)
 
+* For the second part we will create signatures based on different markers (not differential analysis) which involves key biological process related to regeneration. Since the reference is available in a single text document, the gene index has been set manually.
+
+* For saving the signatures we have filtered the different categories (minimum 2 genes per process seen in the spatial expression profile) Since the gene list is extremely reduced (we are mapping 2 or 3 genes) the Ucell score will give low scores even if binary mapping could be informative.
+
 ```{r pdf-signatures}
 # Example manually annotated gene sets from database list (mapped to gene IDs beforehand)
-signatures_interest <- list(
-  EGFR = c("gbi-12345", "gbi-12346"),
-  Dpp_TGFb = c("gbi-23456", "gbi-23457"),
-  Insulin_IGF = c("gbi-34567", "gbi-34568"),
-  Notch = c("gbi-45678", "gbi-45679"),
-  Toll = c("gbi-56789", "gbi-56780"),
-  TFs = c("gbi-67890", "gbi-67891"),
-  Methyl_Histone = c("gbi-78901", "gbi-78902"),
-  Chromatin_Remodeling = c("gbi-89012", "gbi-89013")
-)
 
+# Convert gene names to IDs
+gene_dict <- read_csv(file.path(data_path, "liste_gene_and_code.csv")) %>%
+  mutate(
+    gene_name = tolower(str_trim(gene_name)),
+    gene_id   = tolower(str_replace_all(str_trim(gene_id), "_", "-"))  # 🔥 la línea clave
+  )
+
+# Signaling
+genes_hedgehog     <- c("su(fu)", "ptr")
+genes_egfr         <- c("spi", "phl", "rl", "mkp3", "kay")
+genes_dpp          <- c("mav", "actβ", "myoglianin", "put", "mad", "bun")
+genes_vegf         <- c("pvr", "pvf1")
+genes_insulin_igf  <- c("inr", "pten")
+genes_notch        <- c("n", "sno")
+genes_toll         <- c("spz", "toll-9", "tl", "18w", "rel", "dl")
+
+# TFs
+genes_tfs <- c("ets21c", "ab", "mtf-1", "hr4", "sima", "p53", "vri", "runxb", "jra", "myb", "zfh1", "lz")
+
+# Epigenetic regulation
+genes_methyl_histone   <- c("utx", "lid", "trx", "pc")
+genes_acetyl_histone   <- c("cg14220", "enok", "hdac4", "hdac6")
+genes_chrom_remodeling <- c("etl1", "snr1", "mor")
+genes_dna_methylation  <- c("dmap1")
+
+# Set ID
+map_to_ids <- function(gene_names) {
+  gene_dict %>%
+    filter(gene_name %in% gene_names) %>%
+    pull(gene_id) %>%
+    unique()
+}
+
+# Save list
+ids_hedgehog     <- map_to_ids(genes_hedgehog)
+ids_egfr         <- map_to_ids(genes_egfr)
+ids_dpp          <- map_to_ids(genes_dpp)
+ids_vegf         <- map_to_ids(genes_vegf)
+ids_insulin_igf  <- map_to_ids(genes_insulin_igf)
+ids_notch        <- map_to_ids(genes_notch)
+ids_toll         <- map_to_ids(genes_toll)
+ids_tfs          <- map_to_ids(genes_tfs)
+ids_methyl_hist  <- map_to_ids(genes_methyl_histone)
+ids_acetyl_hist  <- map_to_ids(genes_acetyl_histone)
+ids_remodeling   <- map_to_ids(genes_chrom_remodeling)
+ids_dna_methyl   <- map_to_ids(genes_dna_methylation)
+
+# Verify
+sapply(list(
+  Hedgehog = ids_hedgehog,
+  EGFR = ids_egfr,
+  Dpp_TGFb = ids_dpp,
+  VEGF = ids_vegf,
+  Insulin_IGF = ids_insulin_igf,
+  Notch = ids_notch,
+  Toll = ids_toll,
+  TFs = ids_tfs,
+  Methyl_Histone = ids_methyl_hist,
+  Acetyl_Histone = ids_acetyl_hist,
+  Chromatin_Remodeling = ids_remodeling,
+  DNA_Methylation = ids_dna_methyl
+), function(x) sum(x %in% rownames(seurat_obj)))
+
+# Set positive signatures
+signatures_interest <- list(
+  EGFR                 = ids_egfr,
+  Dpp_TGFb             = ids_dpp,
+  Insulin_IGF          = ids_insulin_igf,
+  Notch                = ids_notch,
+  Toll                 = ids_toll,
+  TFs                  = ids_tfs,
+  Methyl_Histone       = ids_methyl_hist,
+  Chromatin_Remodeling = ids_remodeling
+)
+gene_annot <- seurat_obj@misc$gene_annotations
+
+# Save in metadata
+for (sig in names(signatures_interest)) {
+  gene_annot[[sig]] <- rownames(gene_annot) %in% signatures_interest[[sig]]
+}
+
+# Verify
+seurat_obj@misc$gene_annotations <- gene_annot
+sapply(gene_annot[names(signatures_interest)], sum)
+
+
+# Get Ucell score
 for (sig in names(signatures_interest)) {
   seurat_obj <- AddModuleScore_UCell(
     seurat_obj,
@@ -158,6 +253,8 @@ for (feat in ucell_feats) {
     pt.size.factor = 3
   ) + ggtitle(feat)
   
+  print(p)
+  
   ggsave(
     filename = file.path(output_dir, paste0(feat, ".png")),
     plot = p,
@@ -169,13 +266,16 @@ for (feat in ucell_feats) {
 
 ```
 
-## 10. Visualize database-Informed Scores (Binary)
+## 10.1 Visualize database-Informed Scores (Binary)
 
-```{r plot-flybase-scores-binary}
+* Extra visualization for binary maps with a custom threshold, here 0.15 for TRUE.
+
+```{r plot-scores-binary}
 
 binary_dir <- file.path(output_dir, "binary")
-
 if (!dir.exists(binary_dir)) dir.create(binary_dir)
+
+# Set Threshold
 threshold <- 0.15
 
 for (feat in ucell_feats) {
@@ -195,6 +295,52 @@ for (feat in ucell_feats) {
     ) +
     ggtitle(paste0(feat, " > ", threshold)) +
     theme(plot.title = element_text(hjust = 0.5, size = 16))
+  
+  print(p)
+  
+  ggsave(
+    filename = file.path(binary_dir, paste0(feat, "_binary.png")),
+    plot = p,
+    width = 6,
+    height = 6,
+    dpi = 300
+  )
+}
+```
+
+
+## 10.2 Visualize database-Informed Scores (Binary)
+
+* Extra visualization for binary maps with a custom threshold, here 0.10 for TRUE.
+
+```{r plot--scores-binary}
+# Binary regions
+features_to_plot <- c("growthUCell", "regen_upUCell", "regen_downUCell", "scarringUCell")
+
+# SET THRESHOLD
+threshold <- 0.10
+
+# FIGURES
+for (feat in features_to_plot) {
+  bin_col <- paste0(feat, "_bin")
+  
+  # create binary column
+  seurat_obj@meta.data[[bin_col]] <- as.numeric(seurat_obj@meta.data[[feat]] > threshold)
+  
+  # simple scale binary
+  p <- SpatialFeaturePlot(
+    seurat_obj,
+    features = bin_col,
+    pt.size.factor = 3
+  ) +
+    scale_fill_gradientn(
+      colours = c("grey90", "red3"),
+      limits = c(0, 1)
+    ) +
+    ggtitle(paste0(feat, " > ", threshold)) +
+    theme(plot.title = element_text(hjust = 0.5, size = 16))
+  
+  print(p)
   
   ggsave(
     filename = file.path(binary_dir, paste0(feat, "_binary.png")),
@@ -220,4 +366,7 @@ saveRDS(seurat_obj, file.path(base_path, "grillus_seurat_ucell_final.rds"))
 **Next Steps:**
 - Add biological interpretation layers
 - Cross-species ontology mapping (e.g., via FlyBase, GO)
+- Combine UCell with clustering or region segmentation
+
+
 - Combine UCell with clustering, pseudotime or region segmentation
