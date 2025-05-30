@@ -1,0 +1,14 @@
+mai-30 14:58:07.236 [main] DEBUG nextflow.cli.Launcher - $> nextflow run filtering_clustering_pipeline.nf --sample_name Visium_FFPE_V43T08-051_D --thr_min 2500 --thr_max Inf --basal_thr 0.25 --classical_thr 0.25 --output nf_output --seeds 1,2
+mai-30 14:58:07.364 [main] DEBUG nextflow.cli.CmdRun - N E X T F L O W  ~  version 24.10.4
+mai-30 14:58:07.403 [main] DEBUG nextflow.plugin.PluginsFacade - Setting up plugin manager > mode=prod; embedded=false; plugins-dir=/Users/memarchand/.nextflow/plugins; core-plugins: nf-amazon@2.9.2,nf-azure@1.10.2,nf-cloudcache@0.4.2,nf-codecommit@0.2.2,nf-console@1.1.4,nf-google@1.15.3,nf-tower@1.9.3,nf-wave@1.7.4
+mai-30 14:58:07.441 [main] INFO  o.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
+mai-30 14:58:07.442 [main] INFO  o.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
+mai-30 14:58:07.447 [main] INFO  org.pf4j.DefaultPluginManager - PF4J version 3.12.0 in 'deployment' mode
+mai-30 14:58:07.466 [main] INFO  org.pf4j.AbstractPluginManager - No plugins
+mai-30 14:58:07.486 [main] DEBUG nextflow.scm.ProviderConfig - Using SCM config path: /Users/memarchand/.nextflow/scm
+mai-30 14:58:07.499 [main] DEBUG nextflow.cli.Launcher - Operation aborted
+nextflow.exception.AbortOperationException: Cannot find script file: filtering_clustering_pipeline.nf
+	at nextflow.cli.CmdRun.getScriptFile(CmdRun.groovy:536)
+	at nextflow.cli.CmdRun.run(CmdRun.groovy:325)
+	at nextflow.cli.Launcher.run(Launcher.groovy:503)
+	at nextflow.cli.Launcher.main(Launcher.groovy:658)
