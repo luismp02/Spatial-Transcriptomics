@@ -1,0 +1,90 @@
+---
+output: html_notebook
+params:
+  seed: 1
+  filtered_matrix: 'Visium_FFPE_V43T08-051_D_filtered.csv'
+  annotated_coordinates: 'Visium_FFPE_V43T08-051_D_annotation.csv'
+  sample_name: 'Visium_FFPE_V43T08-051_D'
+  working_dir: '../../../analysis/filtered_data'
+---
+
+```{r setup, include=TRUE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+seed <- params$seed
+filtered_matrix <- params$filtered_matrix
+annotated_coordinates <- params$annotated_coordinates
+sample_name <- params$sample_name
+working_dir <- params$working_dir
+```
+
+```{r output definition, eval=TRUE}
+simulated_matrix <- paste0(sample_name,'_simulated_',seed,'.csv')
+```
+
+---
+title: "SRT simulation - same domain `r sample_name` - seed: `r seed`"
+---
+
+```{r libraries loading}
+source('SRT_functions.R')
+library('SRTsim')
+library('dplyr')
+```
+
+```{r SRT object creation, eval = TRUE}
+filtered_count <- read.csv(file.path(working_dir, filtered_matrix), header=TRUE, row.names = 1)
+
+loc <- read.csv(file.path(working_dir, annotated_coordinates), header = TRUE, row.names = 1)
+
+loc <- loc[,c(1,2)]
+loc$label <- 'all'
+simSRT <- createSRT(count_in=t(filtered_count),loc_in=loc)
+```
+
+```{r seed, eval=FALSE}
+## Set a seed for reproducible simulation
+seed = seed
+```
+
+```{r fitting}
+## Estimate model parameters for data generation
+set.seed(seed)
+simSRT_fit <- srtsim_fit(simSRT, sim_schem="tissue")
+```
+
+```{r drawing, eval = TRUE}
+## Generate synthetic data with estimated parameters
+simSRT_count <- srtsim_count(simSRT_fit)
+```
+
+```{r metrics, eval = TRUE}
+## Compute metrics 
+simSRT_count <- compareSRT(simSRT_count)
+
+## Visualize Metrics
+visualize_metrics(simSRT_count)
+```
+
+```{r, eval=TRUE}
+compare_ref_sim('classical_UCell', simSRT_count)
+```
+
+```{r, eval=TRUE}
+compare_ref_sim('basal_UCell', simSRT_count)
+```
+
+```{r, eval=TRUE}
+compare_ref_sim('SPRR3', simSRT_count)
+```
+
+```{r, eval=TRUE}
+compare_ref_sim('TFF1', simSRT_count)
+```
+
+```{r saving simulated data,, eval = TRUE}
+sim_counts_mat <- as.matrix(simSRT_count@simCounts)
+write.csv(t(sim_counts_mat), file = file.path(working_dir, simulated_matrix))
+```
