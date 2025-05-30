@@ -6,7 +6,7 @@ import ot
 from sklearn.decomposition import PCA
 
 
-def mclust_R(adata, num_cluster, modelNames='EEE', used_obsm='emb_pca', random_seed=2020): #modification: num_cluster --> n_clusters_list
+def mclust_R(adata, num_cluster, modelNames='EEE', used_obsm='emb_pca', random_seed=2020):
     """\
     Clustering using the mclust algorithm.
     The parameters are the same as those in the R package mclust.
@@ -66,36 +66,34 @@ def clustering(adata, n_clusters_list=7, radius=50, key='emb_pca', method='mclus
     #add: modify int to list
     if isinstance(n_clusters_list, int):
         n_clusters_list = [n_clusters_list]
-
     pca = PCA(n_components=20, random_state=42) 
     embedding = pca.fit_transform(adata.obsm['emb'].copy())
     adata.obsm['emb_pca'] = embedding
-    
     if method == 'mclust':
        for n_clusters in n_clusters_list: #add 
             adata = mclust_R(adata, used_obsm=key, num_cluster=n_clusters)
-            adata.obs[f'domain_{n_clusters}'] = adata.obs['mclust'] #modification adata.obs['domain'] --> adata.obs['domain_{n_clusters}']
+            adata.obs[f'{method}_{n_clusters}'] = adata.obs['mclust'] #modification adata.obs['domain'] --> adata.obs['domain_{n_clusters}']
     elif method == 'leiden':
        res_list = search_res(adata, n_clusters_list, use_rep=key, method=method, start=start, end=end, increment=increment)
        for res in res_list: #add 
             sc.tl.leiden(adata, random_state=0, resolution=res[0]) #modification: res --> res [0] (res is a tuple (resolution, n_cluster))
-            adata.obs[f'domain_{res[1]}'] = adata.obs['leiden'] #modification: adata.obs['domain'] --> adata.obs[f'domain_{res[1]}']
+            adata.obs[f'{method}_{res[1]}'] = adata.obs['leiden'] #modification: adata.obs['domain'] --> adata.obs[f'domain_{res[1]}']
     elif method == 'louvain':
-       res_list = search_res(adata, n_clusters_list, use_rep=key, method=method, start=start, end=end, increment=increment)
-       for res in res_list: #add
+        res_list = search_res(adata, n_clusters_list, use_rep=key, method=method, start=start, end=end, increment=increment)
+        for res in res_list: #add
             sc.tl.louvain(adata, random_state=0, resolution=res[0]) #modification
-            adata.obs[f'domain_{res[1]}'] = adata.obs['louvain'] #modification
+            adata.obs[f'{method}_{res[1]}'] = adata.obs['louvain'] #modification
     
     if refinement:  
         if method == 'mclust': #add
             for n_clusters in n_clusters_list: #add a loop to do refinement for all the clusterings
-                    new_type = refine_label(adata, radius, key=f'domain_{n_clusters}') #modification: adata.obs['domain'] --> adata.obs[f'domain_{n_clusters}']
-                    adata.obs[f'domain_{n_clusters}'] = new_type #modification: adata.obs['domain'] --> adata.obs[f'domain_{n_clusters}']
+                    new_type = refine_label(adata, radius, key=f'{method}_{n_clusters}') #modification: adata.obs['domain'] --> adata.obs[f'{method}_{n_clusters}']
+                    adata.obs[f'{method}_{n_clusters}_refined'] = new_type #modification: adata.obs['domain'] --> adata.obs[f'{method}_{n_clusters}']
         #add: create another loop to manage the numbers of clusters that can be detected            
         elif method in ['leiden', 'louvain']:
             for res in res_list:
-                        new_type = refine_label(adata, radius, key=f'domain_{res[1]}') 
-                        adata.obs[f'domain_{res[1]}'] = new_type
+                        new_type = refine_label(adata, radius, key=f'{method}_{res[1]}') 
+                        adata.obs[f'{method}_{res[1]}_refined'] = new_type
 
 
 def refine_label(adata, radius=50, key='label'):
@@ -239,6 +237,8 @@ def search_res(adata, n_clusters_list, method='leiden', use_rep='emb_pca', start
         n_clusters_list = [n_clusters_list]
 
     print('Searching resolution...')
+    print(f'... for {n_clusters_list}')
+
     #label = 0
     sc.pp.neighbors(adata, n_neighbors=50, use_rep=use_rep)
     res_list = [] #add: resolution list initialisation

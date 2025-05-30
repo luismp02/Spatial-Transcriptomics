@@ -1,0 +1,220 @@
+---
+title: "Single-cell analysis"
+output:
+  html_document: default
+  pdf_document: default
+date: "2025-05-05"
+---
+
+```{r}
+library(Seurat)
+library(fastCNV)
+#library(fastCNVdata)
+library(ggplot2)
+library(UCell)
+library(patchwork)
+library(dplyr)
+
+```
+
+```{r}
+options(future.globals.maxSize = 8000 * 1024^2)
+
+input_dir = "~/Project/datashare/genref_hadaca3/"
+
+peng = readRDS(paste0(input_dir, "00_peng_k_2019.rds"))
+```
+
+```{r remove non expressed gene}
+dim(peng@assays$RNA$counts)
+peng@assays$RNA$counts <- peng@assays$RNA$counts[rowSums(peng@assays$RNA$counts)>0,]
+dim(peng@assays$RNA$counts)
+```
+
+```{r}
+ctrl <- c('N1','N2','N3','N4','N5','N6','N7','N8','N9','N10','N11')
+tumor <- c('T1','T2','T3','T4','T5','T6','T7','T8','T9','T10','T11','T12','T13','T14','T15','T16','T17','T18','T19','T20', 'T21', 'T22', 'T23', 'T24')
+
+peng@meta.data$tissue_type <- NA
+peng@meta.data[peng@meta.data$orig.ident %in% ctrl,]$tissue_type<- 'ctrl'
+peng@meta.data[peng@meta.data$orig.ident %in% tumor,]$tissue_type <- 'tumor'
+
+sampled_cells <- sample(Cells(peng), 30000)
+peng_sub = subset(peng, cells = sampled_cells)
+
+peng_sub <- fastCNV(peng_sub, sampleName = 'peng_k_2019', referenceVar = 'orig.ident', referenceLabel = ctrl, printPlot = FALSE)
+```
+
+
+```{r, eval=FALSE}
+ductal_id <- 
+rownames(peng@meta.data[peng@meta.data$cell_type %in% c('Ductal cell type 1', 'Ductal cell type 2'),])
+
+ductal_data <- subset(peng, cells = ductal_id)
+dim(ductal_data@assays$RNA$counts)
+```
+
+```{r, eval=FALSE}
+ductal_data <- fastCNV(ductal_data, sampleName = 'peng_k_2019', referenceVar = 'cell_type', referenceLabel = c('Ductal cell type 1', 'Ductal cell type 2'), printPlot = T)
+```
+
+```{r}
+peng_sub <- RunUMAP(peng_sub, dims = 1:10)
+```
+
+```{r}
+common_theme <- theme(
+  plot.title = element_text(size = 10),
+  legend.text = element_text(size = 8),
+  legend.title = element_text(size = 8),
+  axis.title = element_text(size = 8),
+  axis.text = element_text(size = 6)
+)
+
+FeaturePlot(peng_sub, features = "cnv_fraction", reduction = "umap" ) & common_theme
+```
+
+```{r}
+DimPlot(peng_sub, reduction = "umap", group.by =  "tissue_type") & common_theme
+```
+
+```{r}
+DimPlot(peng_sub, reduction = "umap", group.by =  "cell_type") & common_theme
+```
+
+```{r}
+control_cells <- peng_sub@meta.data[peng_sub@meta.data$tissue_type == 'ctrl', ]$cnv_fraction
+ref <- quantile(control_cells, 0.99)
+```
+
+```{r}
+ggplot(peng_sub@meta.data, aes(x = cnv_fraction, color = tissue_type)) +
+  geom_density(aes(fill = tissue_type), alpha = 0.4) +
+  geom_vline(xintercept = ref,linetype = "dashed", size = 0.2) +
+  theme_minimal() +
+  xlim(c(-0.02, 0.7)) +
+  labs(title = "CNV fraction density by cell type",
+       x = "CNV fraction",
+       y = "Density") 
+
+```
+
+```{r}
+ggplot(FetchData(peng_sub, vars = c("tissue_type", "cnv_fraction")), 
+       aes(tissue_type, cnv_fraction, fill = tissue_type)) +
+  geom_boxplot() +
+  geom_hline(yintercept = ref, linetype = "dashed", size = 0.2) +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1, color = "black"))
+```
+
+```{r}
+DimPlot(peng_sub, group.by = "cnv_clusters") + common_theme
+```
+
+```{r}
+peng_sub@meta.data$cnv_treshold <- 'NA'
+peng_sub@meta.data[peng_sub@meta.data$cnv_fraction >= ref,]$cnv_treshold <- 'above'
+peng_sub@meta.data[peng_sub@meta.data$cnv_fraction < ref,]$cnv_treshold <- 'below'
+
+ggplot(peng_sub@meta.data, aes(fill=cell_type, x = cnv_treshold)) +
+         geom_bar(position = "stack")
+```
+
+```{r}
+cancer_cells <- 
+rownames(peng_sub@meta.data[peng_sub@meta.data$cnv_treshold == 'above' & peng_sub@meta.data$cell_type == 'Ductal cell type 2',])
+
+nrow(peng_sub@meta.data)
+peng_tumor <- subset(peng_sub, cells=cancer_cells)
+nrow(peng_tumor@meta.data)
+```
+
+```{r}
+peng_tumor <- RunPCA(peng_tumor)
+peng_tumor <- FindNeighbors(peng_tumor, dims = 1:10)
+peng_tumor <- FindClusters(peng_tumor, resolution = 0.5)
+peng_tumor <- RunUMAP(peng_tumor, dims = 1:10)
+DimPlot(peng_tumor, reduction = "umap")
+```
+
+
+```{r}
+basal_markers <- c('S100A2', 'KRT17', 'KRT5')
+classical_markers <- c('CLDN18','TFF1','TFF2')
+all_markers <- c(basal_markers, classical_markers)
+FeaturePlot(peng_tumor, features = basal_markers)
+```
+
+```{r}
+FeaturePlot(peng_tumor, features = classical_markers)
+```
+
+
+```{r}
+DoHeatmap(peng_tumor, features = all_markers, group.by = 'seurat_clusters') 
+```
+
+```{r}
+peng_tumor@meta.data$cluster_name <- NA
+#classical
+peng_tumor@meta.data[peng_tumor@meta.data$seurat_clusters == 1,]$cluster_name <- 0
+peng_tumor@meta.data[peng_tumor@meta.data$seurat_clusters == 4,]$cluster_name <- 1
+peng_tumor@meta.data[peng_tumor@meta.data$seurat_clusters == 7,]$cluster_name <- 2
+peng_tumor@meta.data[peng_tumor@meta.data$seurat_clusters == 6,]$cluster_name <- 3
+#intermediate
+peng_tumor@meta.data[peng_tumor@meta.data$seurat_clusters == 3,]$cluster_name <- 4
+peng_tumor@meta.data[peng_tumor@meta.data$seurat_clusters == 9,]$cluster_name <- 5
+peng_tumor@meta.data[peng_tumor@meta.data$seurat_clusters == 0,]$cluster_name <- 6
+
+#basal
+peng_tumor@meta.data[peng_tumor@meta.data$seurat_clusters == 5,]$cluster_name <- 7
+peng_tumor@meta.data[peng_tumor@meta.data$seurat_clusters == 2,]$cluster_name <- 8
+peng_tumor@meta.data[peng_tumor@meta.data$seurat_clusters == 8,]$cluster_name <- 9
+
+DoHeatmap(peng_tumor, features = all_markers, group.by = 'cluster_name') 
+```
+
+```{r}
+peng_tumor.markers <- FindAllMarkers(peng_tumor, only.pos = TRUE)
+peng_tumor.markers %>%
+    group_by(cluster) %>%
+    dplyr::filter(avg_log2FC > 1)
+```
+
+```{r}
+peng_tumor.markers %>%
+    group_by(cluster) %>%
+    dplyr::filter(avg_log2FC > 1) %>%
+    slice_head(n = 3) %>%
+    ungroup() -> top10
+
+
+DoHeatmap(peng_tumor, features = top10$gene, group.by = 'cluster_name')
+```
+
+```{r, eval = FALSE}
+options(future.globals.maxSize = 8000 * 1024^2)
+peng <- SCTransform(peng, assay = "Spatial", verbose = FALSE)
+peng <- RunPCA(peng, assay = "SCT", verbose = FALSE)
+peng <- FindNeighbors(peng, reduction = "pca", dims = 1:30, verbose = FALSE)
+peng <- FindClusters(peng, verbose = FALSE)
+peng <- RunUMAP(peng, reduction = "pca", dims = 1:30, verbose = FALSE)
+```
+
+
+```{r uscore calculation}
+gene.sets <- list() 
+gene.sets$classical <- c("TFF1","TFF2","TFF3","CEACAM6", "LGALS4", "ST6GALNAC1", "PLA2G10","TSPAN8","LYZ","MYO1A", "VSIG2", "CLRN3", "CDH17", "AGR3", "AGR2", "BTNL8", "ANXA10", "FAM3D", "CTSE", "REG4")
+gene.sets$basal <- c("SERPINB3", "SPRR3","SERPINB4", "VGLL1","DHRS9", "SPRR1B", "KRT17", "KRT15", "TNS4", "SCEL", "KRT6A", "KRT7", "CST6", "LY6D", "FAM83A", "AREG", "FGFBP1", "GPR87", "LEMD1","S100A2","SLC2A1")
+
+ucell_obj <- AddModuleScore_UCell(peng_tumor, features = gene.sets, slot = 'data')
+signature.names <- paste0(names(gene.sets), "_UCell")
+```
+
+```{r}
+FeaturePlot(ucell_obj, features = signature.names[1])
+```
+
+```{r}
+FeaturePlot(ucell_obj, features = signature.names[2])
+```

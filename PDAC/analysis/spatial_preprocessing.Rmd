@@ -1,0 +1,403 @@
+---
+title: "Spatial Preprocessing and annotation"
+output: html_document
+date: "2025-04-09"
+params:
+  input_file: '../../../datashare/PDAC/visium_PDAC'
+  thr_min: 2500
+  thr_max: Inf
+  basal_thr: 0.25
+  classical_thr: 0.25
+  sample_name: 'Visium_FFPE_V43T08-051_D'
+  working_dir: '../analysis/filtered_data'
+---
+
+```{r setup, include=TRUE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+input_path <- params$input_file
+lower_threshold <- params$thr_min 
+upper_threshold <- params$thr_max
+basal_Ucell_threshold <- params$basal_thr
+classical_Ucell_threshold <- params$classical_thr
+sample_name <- params$sample_name
+working_dir <- params$working_dir
+```
+
+```{r path definition, eval=TRUE}
+input <- file.path(input_path,sample_name)
+filtered_matrix <- paste0(sample_name,'_filtered.csv')
+cont_table_sctype <-  paste0(sample_name,'_table_sctype.csv')
+cont_table_seurat <-  paste0(sample_name,'_table_seurat.csv')
+annotated_coordinates <- paste0(sample_name,'_annotation.csv')
+preprocessing_figures <- paste0(sample_name,'_preprocessing_figures.pdf')
+```
+
+```{r librairies loading}
+library(Seurat)
+library(SeuratData)
+library(ggplot2)
+library(patchwork)
+library(dplyr)
+library(glmGamPoi)
+library(UCell)
+library(HGNChelper)
+source("https://raw.githubusercontent.com/IanevskiAleksandr/sc-type/master/R/gene_sets_prepare.R")
+source("https://raw.githubusercontent.com/kris-nader/sp-type/main/sp-type.R")
+source("https://raw.githubusercontent.com/IanevskiAleksandr/sc-type/master/R/sctype_score_.R")
+library(ggplot2)
+```
+
+```{r data loading}
+path <- paste0(input, '/outs/') 
+if(!file.exists(path)){
+  path <- paste0(input, '/outs_old/') 
+}
+
+if(file.exists(paste0(path, 'spatial/tissue_positions_list.csv'))){
+  file.remove(paste0(path, 'spatial/tissue_positions_list.csv'))
+}
+
+data <- Load10X_Spatial(data.dir = path, filename= 'filtered_feature_bc_matrix.h5')
+```
+
+# Filtering
+
+```{r quality control}
+#remove non expressed gene
+data@assays$Spatial$counts <- data@assays$Spatial$counts[rowSums(data@assays$Spatial$counts)>0,]
+
+plot1 <- VlnPlot(data, features = "nCount_Spatial", assay = "Spatial", pt.size = 0.1) + NoLegend()
+plot2 <- SpatialFeaturePlot(data, features = "nCount_Spatial", pt.size.factor = 3) + theme(legend.position = "right")
+wrap_plots(plot1, plot2)
+```
+
+```{r filtering, eval = TRUE}
+outlier_spot <- rownames(data@meta.data[data@meta.data$nCount_Spatial>upper_threshold | data@meta.data$nCount_Spatial<lower_threshold,])
+
+SpatialDimPlot(data, cells.highlight = outlier_spot, facet.highlight = TRUE, ncol = 3, pt.size.factor = 3)
+filtered_data <- subset(data, nCount_Spatial > lower_threshold & nCount_Spatial < upper_threshold)
+```
+
+```{r vizualisation after filtering, eval = TRUE}
+plot1 <- VlnPlot(filtered_data, features = "nCount_Spatial", assay = "Spatial", pt.size = 0.1) + NoLegend()
+plot2 <- SpatialFeaturePlot(filtered_data, features = "nCount_Spatial", pt.size.factor = 3) + theme(legend.position = "right")
+wrap_plots(plot1, plot2)
+```
+
+```{r saving filtered data}
+filtered_count <- filtered_data@assays$Spatial$counts
+write.csv(t(filtered_count), file = file.path(working_dir, filtered_matrix), row.names = TRUE)
+```
+
+# Normalization
+
+```{r normalization}
+options(future.globals.maxSize = 8000 * 1024^2)
+normalized_data <- SCTransform(filtered_data, assay = "Spatial", verbose = FALSE)
+normalized_data <- RunPCA(normalized_data, assay = "SCT", verbose = FALSE)
+normalized_data <- FindNeighbors(normalized_data, reduction = "pca", dims = 1:30, verbose = FALSE)
+normalized_data <- FindClusters(normalized_data, verbose = FALSE)
+normalized_data <- RunUMAP(normalized_data, reduction = "pca", dims = 1:30, verbose = FALSE)
+```
+
+```{r}
+plot(density(unlist(normalized_data@assays$SCT@scale.data)), lwd = 2)
+```
+
+
+```{r gene expression visualization, eval=FALSE}
+SpatialFeaturePlot(normalized_data, features = c("TFF1", "SPRR3"), pt.size.factor = 3)
+```
+
+# Annotation
+
+```{r coordinate file processing}
+loc <- read.csv(paste0(path,  '/spatial/tissue_positions.csv'))[,c('barcode', 'pxl_col_in_fullres', 'pxl_row_in_fullres')]
+row.names(loc) <- loc$barcode
+loc <- loc[,-1]
+colnames(loc) <- c('x', 'y')
+
+#removing of spots from loc but absent from count matrix 
+row_to_remove <- setdiff(rownames(loc), colnames(filtered_count))
+loc <- loc[!(rownames(loc) %in% row_to_remove),]
+loc <- loc[order(rownames(loc)), ]
+```
+
+## Ucell
+
+```{r uscore calculation}
+gene.sets <- list() 
+gene.sets$classical <- c("TFF1","TFF2","TFF3","CEACAM6", "LGALS4", "ST6GALNAC1", "PLA2G10","TSPAN8","LYZ","MYO1A", "VSIG2", "CLRN3", "CDH17", "AGR3", "AGR2", "BTNL8", "ANXA10", "FAM3D", "CTSE", "REG4")
+gene.sets$basal <- c("SERPINB3", "SPRR3","SERPINB4", "VGLL1","DHRS9", "SPRR1B", "KRT17", "KRT15", "TNS4", "SCEL", "KRT6A", "KRT7", "CST6", "LY6D", "FAM83A", "AREG", "FGFBP1", "GPR87", "LEMD1","S100A2","SLC2A1")
+
+ucell_obj <- AddModuleScore_UCell(normalized_data, features = gene.sets, slot = 'data')
+signature.names <- paste0(names(gene.sets), "_UCell")
+```
+
+```{r uscore visualization}
+map1 <- SpatialFeaturePlot(ucell_obj, features = signature.names[1], pt.size.factor = 3) +
+  scale_fill_gradientn(limits = c(0, 0.8), colors = c('blue',  'yellow', 'red'))
+
+map2 <- SpatialFeaturePlot(ucell_obj, features = signature.names[2], pt.size.factor = 3) +
+  scale_fill_gradientn(limits = c(0, 0.8), colors = c('blue',  'yellow', 'red'))
+
+uscore_plot <- wrap_plots(map1, map2)
+print(uscore_plot)
+```
+
+```{r filtering based on specific marker, eval = FALSE}
+clrn3_pos <- colnames(normalized_data@assays$Spatial["counts"])[normalized_data@assays$Spatial["counts"]["CLRN3", ] > 1]
+dhrs9_pos <- colnames(normalized_data@assays$Spatial["counts"])[normalized_data@assays$Spatial["counts"]["DHRS9", ] > 13]
+tns4_pos <- colnames(normalized_data@assays$Spatial["counts"])[normalized_data@assays$Spatial["counts"]["TNS4", ] > 7]
+```
+
+```{r classical and basal annotation based on Uscores}
+#obj from classical_basal_identification.Rmd
+classical <- names(ucell_obj$classical_UCell[ucell_obj$classical_UCell > classical_Ucell_threshold])
+basal <- names(ucell_obj$basal_UCell[ucell_obj$basal_UCell > basal_Ucell_threshold])
+
+loc$'uscore label' <- 'other' #Initialization
+if(length(classical)>0){
+  loc[rownames(loc) %in% classical,]$'uscore label' <- 'classical'}
+if(length(basal)>0){
+  loc[rownames(loc) %in% basal,]$'uscore label' <- 'basal'}
+if(length(intersect(classical, basal))>0){
+  loc[rownames(loc) %in% intersect(classical, basal),]$'uscore label' <- 'classical and basal'}
+
+ucell_obj <- AddMetaData(ucell_obj, metadata = loc)
+```
+
+```{r classical and basal annotation based on specific gene expression, eval=FALSE}
+loc$'uscore label' <- 'other' #Initialization
+if(length(classical)>0){
+  loc[rownames(loc) %in% krt6a_pos,]$'uscore label' <- 'KRT6A'}
+if(length(basal)>0){
+  loc[rownames(loc) %in% fam83a_pos,]$'uscore label' <- 'FAM83A'}
+if(length(intersect(classical, basal))>0){
+  loc[rownames(loc) %in% intersect(krt6a_pos, fam83a_pos),]$'uscore label' <- 'KRT6A and FAM83A'}
+```
+
+```{r Ucell visualization}
+classical_basal_plot <- SpatialPlot(ucell_obj, group.by = 'uscore label', pt.size.factor = 3, image.alpha = 0.4)+
+  theme(legend.text = element_text(size=14), legend.title = element_text(size=14))+
+  scale_fill_manual(values = c('basal'='red', 'classical'='yellow', 'classical and basal' = '#ff8503', 'other' = 'blue'))
+print(classical_basal_plot)
+```
+
+## sctype
+
+```{r sctype annotation}
+
+#sctype_result <- run_sctype(normalized_data, known_tissue_type="Pancreas", slot="SCT")
+#loc$'sctype label' <- sctype_result$sctype_classification[rownames(loc)]
+```
+
+```{r}
+# DB file
+db_ <- "https://raw.githubusercontent.com/IanevskiAleksandr/sc-type/master/ScTypeDB_full.xlsx";
+tissue <- "Pancreas" # e.g. Immune system,Pancreas,Liver,Eye,Kidney,Brain,Lung,Adrenal,Heart,Intestine,Muscle,Placenta,Spleen,Stomach,Thymus 
+
+# prepare gene sets
+gs_list <- gene_sets_prepare(db_, tissue)
+```
+```{r}
+sctype_scores <- sctype_score(scRNAseqData = as.matrix(normalized_data@assays$SCT@scale.data), scaled = TRUE, gs = gs_list$gs_positive, gs2 = gs_list$gs_negative)
+
+score_table <- as.data.frame(t(sctype_scores))
+score_table$sctype_classification <- apply(score_table, 1, function(x) names(x)[which.max(x)])
+
+
+sctype_result <- normalized_data
+sctype_result@meta.data$sctype_classification <- score_table$sctype_classification
+loc$'sctype label' <- sctype_result$sctype_classification[rownames(loc)]
+```
+
+```{r sctype visualization}
+library(RColorBrewer)
+types_classif <- sort(unique(sctype_result@meta.data$sctype_classification), decreasing = TRUE)
+n_classif <- length(types_classif)
+base_palette <- colorRampPalette(brewer.pal(10, "Set3"))
+colors_classif <- setNames(base_palette(n_classif), types_classif)
+
+sctype_plot <- SpatialDimPlot(sctype_result, group.by="sctype_classification", pt.size.factor = 3, image.alpha = 0.4)+
+  scale_fill_manual(values = colors_classif)
+print(sctype_plot)
+```
+
+## Ucell + sctype
+
+```{r}
+sctype_barplot <- ggplot(loc, aes(fill=`sctype label`, x = `uscore label`)) +
+  geom_bar(position = "stack") +
+  scale_fill_manual(values = colors_classif)+
+  labs(x='Uscore labels', y='Number of Spots', fill='ScType annotation')+
+  theme(
+    axis.text.x = element_text(size = 14),
+    axis.text.y = element_text(size = 14) 
+  )
+
+print(sctype_barplot)
+```
+```{r}
+contingency_sctype_table <- table(loc$`uscore label`, loc$`sctype label`)
+contingency_sctype_table_with_totals <- addmargins(contingency_sctype_table)
+write.csv(contingency_sctype_table_with_totals, file = file.path(working_dir, cont_table_sctype), row.names = TRUE)
+```
+
+```{r sctype + Ucell visualization}}
+sctype_ucell_plot <- ggplot(loc, aes(x = x, y = y)) +
+  geom_point(aes(fill = `sctype label`, color = `uscore label`), shape = 21, size = 1.4, stroke = 0.6) +
+  scale_color_manual(values = c('basal'='red', 'classical'='#FFDB58', 'classical and basal' = '#ff8503', 'other' = 'blue')) +
+  theme_void() +                          
+  coord_fixed() +   
+  scale_y_reverse() +
+  scale_shape_manual(values = 1:10) +      
+  theme(legend.position = "right")
+
+print(sctype_ucell_plot)
+```
+```{r sctype and uscore labelling combination}
+loc$'sctype + uscore label' <- loc$'sctype label'
+sctype_result@meta.data$'sctype_uscore' <- sctype_result@meta.data$'sctype_classification'
+
+if(length(classical)>0){
+  loc[rownames(loc) %in% classical & loc$`sctype label` == "Ductal cells",]$'sctype + uscore label' <- 'classical'
+  sctype_result@meta.data[rownames(loc) %in% classical & loc$`sctype label` == "Ductal cells",]$'sctype_uscore' <- 'Classical'
+}
+if(length(basal)>0){
+  loc[rownames(loc) %in% basal & loc$`sctype label` == "Ductal cells",]$'sctype + uscore label' <- 'basal'
+  sctype_result@meta.data[rownames(loc) %in% basal & loc$`sctype label` == "Ductal cells",]$'sctype_uscore' <- 'Basal'
+  }
+if(length(intersect(classical, basal))>0){
+  loc[rownames(loc) %in% intersect(classical, basal) & loc$`sctype label` == "Ductal cells",]$'sctype + uscore label' <- 'classical and basal'
+  sctype_result@meta.data[rownames(loc) %in% intersect(classical, basal) & loc$`sctype label` == "Ductal cells",]$'sctype_uscore' <- 'Classical and Basal'
+  }
+```
+
+```{r}
+types_uscore <- unique(sctype_result@meta.data$sctype_uscore)
+
+manual_types <- c("Classical", "Basal", "Classical and Basal") 
+manual_colors <- c("Classical" = "yellow",  
+                   "Basal" = "red", 
+                   "Classical and Basal" = "#ff8503")
+
+new_types <- setdiff(manual_types, types_classif)
+final_colors <- c(colors_classif, manual_colors[new_types])
+final_colors <- final_colors[types_uscore]
+
+sctype_ucell_plot2 <- SpatialDimPlot(sctype_result, group.by="sctype_uscore", pt.size.factor = 3, image.alpha = 0.4)+
+  scale_fill_manual(values = final_colors, name ='ScType & Uscore annotation' ) 
+print(sctype_ucell_plot2)
+```
+
+
+### Annotation with Peng data
+
+```{r load peng PDAC data, eval=FALSE}
+#peng_sc <- readRDS("../../../datashare/genref_hadaca3/00_peng_k_2019.rds")
+purist_peng_sc <- readRDS("../../../datashare/genref_hadaca3/peng_sub.rds")
+```
+
+```{r, eval=FALSE}
+sc_ref[["percent.mt"]] <- PercentageFeatureSet(sc_ref, pattern = "^MT-")
+sc_temp <- sc_ref
+Idents(sc_temp) <- "all_cells"
+VlnPlot(sc_temp, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
+```
+
+```{r, eval=FALSE}
+plot1 <- FeatureScatter(sc_temp, feature1 = "nCount_RNA", feature2 = "percent.mt")
+plot2 <- FeatureScatter(sc_temp, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
+plot1 + plot2
+```
+
+```{r, eval=FALSE}
+VlnPlot(sc_ref_normalized, features = c('KRT19', 'PRSS1'), group.by ='cell_type')
+```
+
+```{r  integration functions}
+data_normalization <- function(data){
+  normalized_data <- SCTransform(data, ncells = 5000, verbose = FALSE) %>%
+      RunPCA(verbose = FALSE) %>%
+      #FindNeighbors(dims = 1:30, verbose = FALSE) %>%
+      #FindClusters(verbose = FALSE) %>%
+      RunUMAP(dims = 1:30, verbose = FALSE)
+  return(normalized_data)}
+
+single_cell_integration <- function(normalized_ref_data, normalized_query_data, label_column, new_colname){
+  anchors <- FindTransferAnchors(reference = normalized_ref_data, 
+                                 query = normalized_query_data, 
+                                 #recompute
+                                 dims = 1:30, 
+                                 reference.reduction = "pca",
+                                 normalization.method = "SCT",
+                                 project.query = FALSE)
+
+  predictions <- TransferData(anchorset = anchors, refdata=normalized_ref_data@meta.data[[label_column]], weight.reduction = normalized_query_data[['pca']], dims = 1:30)
+  
+  normalized_query_data <- AddMetaData(normalized_query_data, metadata = predictions)
+  
+  names(normalized_query_data@meta.data)[names(normalized_query_data@meta.data) == "predicted.id"] <- new_colname
+  
+  return(normalized_query_data)
+}
+```
+
+```{r integration, eval=FALSE}
+#normalized_peng_data <- data_normalization(peng_sc)
+#normalized_data <- single_cell_integration(normalized_peng_data, normalized_data, 'cell_type', 'peng_original_data')
+
+normalized_purist_peng_data <- data_normalization(purist_peng_sc)
+#normalized_data <- single_cell_integration(normalized_purist_peng_data, normalized_data, 'cell_type', 'peng_subset')
+normalized_data <- single_cell_integration(normalized_purist_peng_data, normalized_data, 'hadaca3', 'purist_peng')
+```
+
+
+```{r, eval=FALSE}
+#peng_original_plot <- SpatialDimPlot(normalized_data, group.by="peng_original_data", pt.size.factor = 3, image.alpha = 0.4)
+#peng_subset_plot <- SpatialDimPlot(normalized_data, group.by="peng_subset", pt.size.factor = 3, image.alpha = 0.4)
+purist_peng_plot <- SpatialDimPlot(normalized_data, group.by="purist_peng", pt.size.factor = 3, image.alpha = 0.4)
+#peng_annot_plots <- wrap_plots(peng_original_plot, peng_subset_plot)
+print(purist_peng_plot)
+```
+
+
+```{r, eval=FALSE}
+#loc$'peng original' <-  normalized_data$peng_original_data[rownames(loc)]
+loc$'purist peng' <-  normalized_data$purist_peng[rownames(loc)]
+```
+
+```{r, eval=FALSE}
+peng_barplot2 <- ggplot(loc, aes(fill=`purist peng`, x = `uscore label`)) +
+         geom_bar(position = "stack")
+print(peng_barplot2)
+```
+
+```{r, eval=FALSE}
+contingency_seurat_table <- table(loc$`uscore label`, loc$`purist peng`)
+contingency_seurat_table_with_totals <- addmargins(contingency_seurat_table)
+write.csv(contingency_seurat_table_with_totals, file = file.path(working_dir, cont_table_seurat), row.names = TRUE)
+```
+
+```{r saving spatial annotated data, eval=TRUE}
+write.csv(loc, file = file.path(working_dir, annotated_coordinates), row.names = TRUE)
+```
+
+```{r save figures}
+pdf(file.path(working_dir, preprocessing_figures))
+print(classical_basal_plot)
+print(sctype_plot)
+print(sctype_barplot)
+print(sctype_ucell_plot)
+print(sctype_ucell_plot2)
+#print(peng_original_plot)
+#print(peng_subset_plot)
+#print(purist_peng_plot)
+#print(peng_barplot)
+#print(peng_barplot2)
+dev.off()
+```

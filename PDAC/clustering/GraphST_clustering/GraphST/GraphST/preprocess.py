@@ -47,7 +47,7 @@ def permutation(feature):
     
     return feature_permutated 
 
-def construct_interaction(adata, n_neighbors=3):
+def construct_interaction(adata, n_neighbors=6):
     """Constructing spot-to-spot interactive graph"""
     position = adata.obsm['spatial']
     
@@ -75,7 +75,7 @@ def construct_interaction(adata, n_neighbors=3):
     
     adata.obsm['adj'] = adj
     
-def construct_interaction_KNN(adata, n_neighbors=3):
+def construct_interaction_KNN(adata, n_neighbors=6):
     position = adata.obsm['spatial']
     n_spot = position.shape[0]
     nbrs = NearestNeighbors(n_neighbors=n_neighbors+1).fit(position)  
