@@ -24,6 +24,8 @@ nextflow run filtering_clustering_pipeline.nf \
 --seeds 1,2
 ```
 
-https://github.com/luismp02/Spatial-Transcriptomics/edit/main/PDAC/clustering/figures/clustering_nf_pipeline.png
 
-![pipeline figure](https://github.com/luismp02/Spatial-Transcriptomics/edit/main/PDAC/clustering/figures/clustering_nf_pipeline.png)
+![pipeline figure](https://github.com/luismp02/Spatial-Transcriptomics/tree/main/PDAC/clustering/figures/clustering_nf_pipeline.png)
+
+
+
