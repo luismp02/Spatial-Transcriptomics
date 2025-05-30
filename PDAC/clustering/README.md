@@ -1,5 +1,7 @@
 ## Clustering Nextflow pipeline
 
+![pipeline figure](figures/clustering_nf_pipeline.png)
+
 ### Options
 
 ```
@@ -23,6 +25,23 @@ nextflow run filtering_clustering_pipeline.nf \
 --output nf_output \
 --seeds 1,2
 ```
+### Requirements
 
-
-![pipeline figure](figures/clustering_nf_pipeline.png)
+- anndata==0.8.0
+- harmonypy==0.0.10
+- igraph==0.11.8
+- leidenalg==0.10.2
+- louvain==0.8.2
+- matplotlib==3.4.2
+- numpy==1.22.3
+- POT==0.9.5
+- pandas==1.4.2
+- python
+- R
+- rpy2==3.4.1
+- scanpy=1.9.1
+- scipy==1.8.1
+- scikit-learn==1.1.1
+- seaborn==0.13.2
+- torch
+- tqdm==4.64.0
