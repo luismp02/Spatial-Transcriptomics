@@ -6,7 +6,7 @@
 
 ```
 --input_path (path to data directory)
---sample_name (expect a name that corresponds to an input path subdirectory)
+--sample_name (expect a name that corresponds to an input_path subdirectory)
 --thr_min  (minimum count cutoff to filter spots)
 --thr_max  (maximum count cutoff to filter spots)
 --basal_thr  (basal Uscore threshold to define 'basal' spots)
