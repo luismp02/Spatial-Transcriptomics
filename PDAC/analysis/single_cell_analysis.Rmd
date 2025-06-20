@@ -39,10 +39,10 @@ peng@meta.data$tissue_type <- NA
 peng@meta.data[peng@meta.data$orig.ident %in% ctrl,]$tissue_type<- 'ctrl'
 peng@meta.data[peng@meta.data$orig.ident %in% tumor,]$tissue_type <- 'tumor'
 
-sampled_cells <- sample(Cells(peng), 30000)
-peng_sub = subset(peng, cells = sampled_cells)
+#sampled_cells <- sample(Cells(peng), 30000)
+#peng_sub = subset(peng, cells = sampled_cells)
 
-peng_sub <- fastCNV(peng_sub, sampleName = 'peng_k_2019', referenceVar = 'orig.ident', referenceLabel = ctrl, printPlot = FALSE)
+peng_sub <- fastCNV(peng, sampleName = 'peng_k_2019', referenceVar = 'orig.ident', referenceLabel = ctrl, printPlot = FALSE, getCNVPerChromosomeArm = FALSE, getCNVClusters = FALSE,)
 ```
 
 
@@ -107,7 +107,7 @@ ggplot(FetchData(peng_sub, vars = c("tissue_type", "cnv_fraction")),
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1, color = "black"))
 ```
 
-```{r}
+```{r, eval=FALSE}
 DimPlot(peng_sub, group.by = "cnv_clusters") + common_theme
 ```
 
@@ -134,7 +134,7 @@ peng_tumor <- RunPCA(peng_tumor)
 peng_tumor <- FindNeighbors(peng_tumor, dims = 1:10)
 peng_tumor <- FindClusters(peng_tumor, resolution = 0.5)
 peng_tumor <- RunUMAP(peng_tumor, dims = 1:10)
-DimPlot(peng_tumor, reduction = "umap")
+DimPlot(peng_tumor, reduction = "umap", group.by = 'seurat_clusters')
 ```
 
 
@@ -157,19 +157,21 @@ DoHeatmap(peng_tumor, features = all_markers, group.by = 'seurat_clusters')
 ```{r}
 peng_tumor@meta.data$cluster_name <- NA
 #classical
-peng_tumor@meta.data[peng_tumor@meta.data$seurat_clusters == 1,]$cluster_name <- 0
-peng_tumor@meta.data[peng_tumor@meta.data$seurat_clusters == 4,]$cluster_name <- 1
-peng_tumor@meta.data[peng_tumor@meta.data$seurat_clusters == 7,]$cluster_name <- 2
+peng_tumor@meta.data[peng_tumor@meta.data$seurat_clusters == 9,]$cluster_name <- 0
+peng_tumor@meta.data[peng_tumor@meta.data$seurat_clusters == 5,]$cluster_name <- 1
+peng_tumor@meta.data[peng_tumor@meta.data$seurat_clusters == 8,]$cluster_name <- 2
 peng_tumor@meta.data[peng_tumor@meta.data$seurat_clusters == 6,]$cluster_name <- 3
+
 #intermediate
-peng_tumor@meta.data[peng_tumor@meta.data$seurat_clusters == 3,]$cluster_name <- 4
-peng_tumor@meta.data[peng_tumor@meta.data$seurat_clusters == 9,]$cluster_name <- 5
-peng_tumor@meta.data[peng_tumor@meta.data$seurat_clusters == 0,]$cluster_name <- 6
+peng_tumor@meta.data[peng_tumor@meta.data$seurat_clusters == 0,]$cluster_name <- 4
+peng_tumor@meta.data[peng_tumor@meta.data$seurat_clusters == 10,]$cluster_name <- 5
+peng_tumor@meta.data[peng_tumor@meta.data$seurat_clusters == 3,]$cluster_name <- 6
+peng_tumor@meta.data[peng_tumor@meta.data$seurat_clusters == 2,]$cluster_name <- 7
 
 #basal
-peng_tumor@meta.data[peng_tumor@meta.data$seurat_clusters == 5,]$cluster_name <- 7
-peng_tumor@meta.data[peng_tumor@meta.data$seurat_clusters == 2,]$cluster_name <- 8
-peng_tumor@meta.data[peng_tumor@meta.data$seurat_clusters == 8,]$cluster_name <- 9
+peng_tumor@meta.data[peng_tumor@meta.data$seurat_clusters == 7,]$cluster_name <- 8
+peng_tumor@meta.data[peng_tumor@meta.data$seurat_clusters == 4,]$cluster_name <- 6
+peng_tumor@meta.data[peng_tumor@meta.data$seurat_clusters == 1,]$cluster_name <- 10
 
 DoHeatmap(peng_tumor, features = all_markers, group.by = 'cluster_name') 
 ```

@@ -11,7 +11,23 @@ import seaborn as sns
 import harmonypy as hm
 
 def clustering_plot(ax, adata, colname):
-    sp_size = 55000/len(adata.obs)
+    #calcul de la taille des spots
+    df = adata.obs.loc[:, ['x', 'y']].sort_values(by=['x', 'y'])
+    last_value = float('inf')
+    x_nb = 0
+    #y_line = 0
+    #y_list = {}
+    for i in df['y']:
+        if i < last_value:
+            last_value = i
+            #y_line = y_line+1
+        if i > last_value:
+            x_nb = x_nb+1
+            last_value = i
+            #y_list[x_nb]=y_line
+            #y_line = 0
+
+    sp_size = 2500/x_nb
     sc.pl.spatial(adata, img_key="hires", color=colname, show=False, ax=ax,  spot_size=1, size = sp_size, scale_factor = 1, title=None)
 
 def umap(ax, adata, colname):

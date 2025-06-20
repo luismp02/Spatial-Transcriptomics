@@ -4,7 +4,8 @@ process metrics_and_visualization {
 
     input:
     path clustered_data
-    path path_to_project
+    val path_to_dir
+    path path_to_visualization_functions
 
     output:
     path "*.pdf", emit : figures
@@ -12,10 +13,9 @@ process metrics_and_visualization {
 
     script:
     """
-    source ~/Project/Spatial-Transcriptomics/PDAC/clustering/envrt_clustering/bin/activate
-    papermill ~/Project/Spatial-Transcriptomics/PDAC/clustering/clustering_assessment/metrics_and_visualization.ipynb \
+    source ${path_to_dir}/clustering/envrt_clustering/bin/activate
+    papermill ${path_to_dir}/clustering/clustering_assessment/metrics_and_visualization.ipynb \
         -p clustered_data ${clustered_data} \
-        -p path_to_project ${path_to_project}
     deactivate
     """
 }

@@ -3,6 +3,7 @@ process spatial_preprocessing {
     publishDir "${params.output}/data", mode: 'copy'
 
     input:
+    val path_to_dir
     val input_file
     val thr_min
     val thr_max
@@ -17,9 +18,9 @@ process spatial_preprocessing {
 
     script:
     """
-    Rscript -e "rmarkdown::render('~/Project/Spatial-Transcriptomics/PDAC/analysis/spatial_preprocessing.Rmd',
+    Rscript -e "rmarkdown::render('${path_to_dir}/analysis/spatial_preprocessing.Rmd',
         output_file = '${params.sample_name}_spatial_preprocessing_report.html',
-        output_dir = '~/Project/Spatial-Transcriptomics/PDAC/analysis/report',
+        output_dir = '${path_to_dir}/analysis/report',
         params = list(
             input_file = '${input_file}',
             thr_min = ${thr_min},

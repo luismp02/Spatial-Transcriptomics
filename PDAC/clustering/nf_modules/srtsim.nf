@@ -4,7 +4,7 @@ process srtsim {
 
 
     input:
-    tuple val(seed), path(filtered_matrix), path(annotated_coordinates)
+    tuple val(seed), path(filtered_matrix), path(annotated_coordinates), val(path_to_dir)
 
     output:
     path "${params.sample_name}_simulated_${seed}.csv", emit : simulated_data
@@ -12,9 +12,9 @@ process srtsim {
 
     script:
     """
-    Rscript -e "rmarkdown::render('~/Project/Spatial-Transcriptomics/PDAC/simulations/SRTsim/scripts/SRTsim_same_domains.Rmd',
+    Rscript -e "rmarkdown::render('${path_to_dir}/simulations/SRTsim/scripts/SRTsim_same_domains.Rmd',
         output_file = '${params.sample_name}_${seed}_SRTsim_same_domain_report.html',
-        output_dir = '~/Project/Spatial-Transcriptomics/PDAC/simulations/SRTsim/report',
+        output_dir = '${path_to_dir}/simulations/SRTsim/report',
         params = list(
             seed = ${seed},
             filtered_matrix = '$filtered_matrix',
