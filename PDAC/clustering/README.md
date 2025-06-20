@@ -5,6 +5,7 @@
 ### Options
 
 ```
+--input_path (path to data directory)
 --sample_name
 --thr_min  (minimum count cutoff to filter spots)
 --thr_max  (maximum count cutoff to filter spots)
@@ -12,11 +13,13 @@
 --classical_thr  (classical Uscore threshold to define 'classical' spots)
 --output
 --seeds (seeds used to generate simulated spatial transcriptomics  data)
+--r_path (path to the directory where R is locally installed)
 ```
 ### Example
 
 ```
 nextflow run filtering_clustering_pipeline.nf \
+--input_path ../../../datashare/PDAC/visium_PDAC \
 --sample_name Visium_FFPE_V43T08-051_D \
 --thr_min 2500 \
 --thr_max Inf \
@@ -24,6 +27,7 @@ nextflow run filtering_clustering_pipeline.nf \
 --classical_thr 0.25 \
 --output nf_output \
 --seeds 1,2
+--r_path /Library/Frameworks/R.framework/Resources
 ```
 ### Requirements
 
