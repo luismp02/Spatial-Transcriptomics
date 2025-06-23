@@ -28,11 +28,11 @@ workflow {
     spatial_preprocessing(path_to_dir, input, params.thr_min, params.thr_max, params.basal_thr, params.classical_thr)
 
     if (params.seeds){
-        if (params.seeds.contains(',')) {
+        if (params.seeds.toString().contains(',')) {
             seed_ch = channel.from(params.seeds.split(',')*.trim()*.toInteger())
         }
         else{
-            seed_ch = channel.of(params.seeds.trim.toInteger())
+            seed_ch = channel.of(params.seeds.toInteger())
         }
         spatial_preprocessing.out.filtered_matrix
             .combine(spatial_preprocessing.out.annotated_coordinates)
