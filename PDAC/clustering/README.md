@@ -11,7 +11,9 @@
 --thr_max  (maximum count cutoff to filter spots)
 --basal_thr  (basal Uscore threshold to define 'basal' spots)
 --classical_thr  (classical Uscore threshold to define 'classical' spots)
---output
+--min_clust (minimal number of clusters)
+--max_clust (maximal number of clusters, such as min_clust to max_clust clusters will be generated)
+--output (output directory)
 --seeds (seeds used to generate simulated spatial transcriptomics  data)
 --r_path (path to the directory where R is locally installed)
 ```
@@ -26,6 +28,8 @@ nextflow run filtering_clustering_pipeline.nf \
 --thr_max Inf \
 --basal_thr 0.25 \
 --classical_thr 0.25 \
+--min_clust 2 \
+--max_clust 10 \
 --output nf_output \
 --seeds 1,2 \
 --r_path /Library/Frameworks/R.framework/Resources
