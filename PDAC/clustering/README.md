@@ -62,7 +62,7 @@ Concerning metrics, python methods can be added in clustering_assesment/metrics_
 
 ### Methods
 
-The different methods used are described in M2-MEMOIRE_Mehdi_Marchand.
+The different methods used are described in M2-MEMOIRE-Marchand_Mehdi_2024-2025.
 Note: GraphST proposes an optional method to reassign the spots to the same cluster as those of the surrounding spots within a defined radius (=refinement).
 
 
