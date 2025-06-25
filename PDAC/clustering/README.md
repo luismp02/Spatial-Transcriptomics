@@ -60,19 +60,9 @@ nextflow run filtering_clustering_pipeline.nf \
 Nextflow process can be added in the nf_modules directory and implemented in the filtering_clustering_pipeline.nf to implement a new clustering method.  
 Concerning metrics, python methods can be added in clustering_assesment/metrics_and_visualizations_functions.py (see the implemented ones, namely lisi_metrics, silhouette metrics, rand_index and adjusted_rand_index functions). The functions from metrics_and_visualizations_functions.py are executed in metrics_and_visualizaations.ipynb. If specific input are required to calculate the new metric, it must be specified in the nextflow pipeline and the metrics_and_visualization.nf module. 
 
-### SCTransform 
+### Methods
 
-The SCTransform function from Seurat (5.2.0) was used, as part of the preprocessing, to normalize and scale the 10X spatial transcriptomics expression data. 
-
-It models the expression of each gene through a negative binomial distribution (i), using the counts of gene i from all spots and considering the sequencing depth as a covariate (ii).
-
-(i) Y ~ NB(μ, θ)
-
-(ii) log(expected count_j) = β₀ + β₁ × log₁₀(sequencing depth)
-
-The parameters μ (mean) and θ (dispersion) were estimated independently for each gene, offering greater flexibility. Thus, gene expected counts for each spot were determined through the distribution, accounting for the sequencing depth of the spots.
-Finally, Pearson residuals (iii), that correspond to the final normalized counts, were calculated, measuring the difference between observed and estimated counts.
-  
-
+The different methods used are described in M2-MEMOIRE_Mehdi_Marchand.
+Note: GraphST proposes an optional method to reassign the spots to the same cluster as those of the surrounding spots within a defined radius (=refinement).
 
 
