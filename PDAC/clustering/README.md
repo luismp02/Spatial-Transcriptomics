@@ -66,9 +66,9 @@ The SCTransform function from Seurat (5.2.0) was used, as part of the preprocess
 
 It models the expression of each gene through a negative binomial distribution (i), using the counts of gene i from all spots and considering the sequencing depth as a covariate (ii).
 
-(i) \( Y \sim \text{NB}(\mu, \theta) \)
+(i) Y ~ NB(μ, θ)
 
-(ii) \( \log(\text{expected count}_j) = \beta_0 + \beta_1 \log_{10}(\text{sequencing depth}) \)
+(ii) log(expected count_j) = β₀ + β₁ × log₁₀(sequencing depth)
 
 The parameters μ (mean) and θ (dispersion) were estimated independently for each gene, offering greater flexibility. Thus, gene expected counts for each spot were determined through the distribution, accounting for the sequencing depth of the spots.
 Finally, Pearson residuals (iii), that correspond to the final normalized counts, were calculated, measuring the difference between observed and estimated counts.
