@@ -35,7 +35,7 @@ def data_preprocessing(count_data, spatial_data, typ='filtered'):
     adata.obsm['spatial'] = adata.obsm['spatial'].astype('float64')
     return adata, col_label_true
 
-def graphST_clustering(adata, method, n_clusters_list, refinement=True):
+def graphST_clustering(adata, method, n_clusters_list, start, end, refinement=True):
     '''
     refinement (False or True) = label re-assignment as the same domain as the most common label of its surronding spots (based on radius)
     if refinement = True, it generates a {method}_{n_clusters}_refined column in addition to the {method}_{n_clusters} column
@@ -44,11 +44,11 @@ def graphST_clustering(adata, method, n_clusters_list, refinement=True):
     if method == 'mclust':
       clustering(adata, n_clusters_list, radius=50, key='emb_pca', method=method, refinement=refinement) 
     elif method in ['leiden', 'louvain']:
-      clustering(adata, n_clusters_list, radius=50, key='emb_pca', method=method, start=0.01, end=1.5, increment=0.01, refinement=refinement)
+      clustering(adata, n_clusters_list, radius=50, key='emb_pca', method=method, start=start, end=end, increment=0.01, refinement=refinement)
     adata.obs.drop(columns=[method], inplace=True) #remove the method column (redundant)
     return adata
 
-def graphST_methods_loop(adata, methods, n_clusters_list, refinement):
+def graphST_methods_loop(adata, methods, n_clusters_list, start, end, refinement):
     '''
     Execute the clustering and the visualization/metrics for the methods of interest 
     Parameters:
@@ -64,6 +64,6 @@ def graphST_methods_loop(adata, methods, n_clusters_list, refinement):
     for method in methods:
         copy_list = n_clusters_list.copy()
         # clustering
-        adata = graphST_clustering(adata, method, copy_list, refinement)
+        adata = graphST_clustering(adata, method, copy_list, start, end, refinement)
 
     return adata

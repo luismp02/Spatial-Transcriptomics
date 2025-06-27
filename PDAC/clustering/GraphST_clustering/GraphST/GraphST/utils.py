@@ -33,7 +33,7 @@ def mclust_R(adata, num_cluster, modelNames='EEE', used_obsm='emb_pca', random_s
 
 def clustering(adata, n_clusters_list=7, radius=50, key='emb_pca', method='mclust', start=0.1, end=3.0, increment=0.01, refinement=False):
     # n_clusters --> n_clusters_list
-    """\
+    """
     Spatial clustering based the learned representation.
 
     Parameters
@@ -233,8 +233,8 @@ def search_res(adata, n_clusters_list, method='leiden', use_rep='emb_pca', start
     '''
 
     #add: modify int to list
-    if isinstance(n_clusters_list, int):
-        n_clusters_list = [n_clusters_list]
+    #if isinstance(n_clusters_list, int):
+    #    n_clusters_list = [n_clusters_list]
 
     print('Searching resolution...')
     print(f'... for {n_clusters_list}')

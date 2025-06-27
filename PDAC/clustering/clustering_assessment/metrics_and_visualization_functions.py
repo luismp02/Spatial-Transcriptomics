@@ -11,37 +11,39 @@ import seaborn as sns
 import harmonypy as hm
 
 def clustering_plot(ax, adata, colname):
-    #calcul de la taille des spots
-    df = adata.obs.loc[:, ['x', 'y']].sort_values(by=['x', 'y'])
-    last_value = float('inf')
-    x_nb = 0
-    #y_line = 0
-    #y_list = {}
+    '''Compute the spot size based on the coordinates'''
+    #computation of the spot size
+    df = adata.obs.loc[:, ['x', 'y']].sort_values(by='y')
+    iteration = 0
+    list=[]
+    line_y = 1
     for i in df['y']:
-        if i < last_value:
-            last_value = i
-            #y_line = y_line+1
-        if i > last_value:
-            x_nb = x_nb+1
-            last_value = i
-            #y_list[x_nb]=y_line
-            #y_line = 0
-
-    sp_size = 2500/x_nb
+        iteration = iteration +1
+        if iteration > 1:
+            if i-last_value<1:
+                line_y = line_y+1
+            else:
+                list.append(line_y)
+                line_y=0
+        last_value = i
+    size = max(list)  
+    sp_size = 1200/size
     sc.pl.spatial(adata, img_key="hires", color=colname, show=False, ax=ax,  spot_size=1, size = sp_size, scale_factor = 1, title=None)
 
 def umap(ax, adata, colname):
-    '''plotting predicted labels by UMAP'''
+    '''Plotting predicted labels by UMAP'''
     sc.pp.neighbors(adata, use_rep='emb_pca', n_neighbors=10)
     sc.tl.umap(adata)
     sc.pl.umap(adata, color=colname, title=['Predicted labels'], show=False, ax=ax)
 
 def silhouette_metrics(adata, cluster_labels):
+    '''Compute the silhouette metric'''
     X = adata.obsm['emb_pca']
     sample_silhouette_values = silhouette_samples(X, cluster_labels)
     return sample_silhouette_values
 
 def lisi_metrics(data, colname):
+    '''Compute the lisi metric'''
     #X = data.obs.loc[:,['x','y']]
     X = data.obsm['emb_pca']
     metadata = data.obs.iloc[:,2:]
@@ -51,7 +53,7 @@ def lisi_metrics(data, colname):
 
 def clustered_distribution_plot(ax, values, cluster_labels, metric):
     '''
-    metric to evaluate the clustering 
+    Generate ridgeline plot (for LISI or silhouette score)
     '''
     avg_value = np.mean(values)
     y_lower = 10
@@ -89,12 +91,26 @@ def clustered_distribution_plot(ax, values, cluster_labels, metric):
     return avg_value
     
 def rand_index(adata, col_label_true, col_label_pred):
+    '''
+    Compute rand index score
+    Parameters:
+        adata : data
+        col_label_true : column name that corresponds to the ground truth (list or str)
+        col_label_pred : column name that corresponds to the clustering results
+    '''
     labels_true = adata.obs[col_label_true]
     labels_pred = adata.obs[col_label_pred]
     ri = rand_score(labels_true, labels_pred)
     return ri
 
 def adjusted_rand_index(adata, col_label_true, col_label_pred):
+    '''
+    Compute adjusted rand index score
+    Parameters:
+        adata : data
+        col_label_true : column name that corresponds to the ground truth (list or str)
+        col_label_pred : column name that corresponds to the clustering results
+    '''
     labels_true = adata.obs[col_label_true]
     labels_pred = adata.obs[col_label_pred]
     ari = adjusted_rand_score(labels_true, labels_pred)
@@ -102,12 +118,14 @@ def adjusted_rand_index(adata, col_label_true, col_label_pred):
 
 def metrics_and_visualizations(adata, clustering_colname, col_label_true=None, show=False):
     '''
-    Calculates different metrics and generates figures to compare clustering
-    show ('True/False') print directly the figures
-    col_label_true : columns name that corresponds to the ground truth (list or str)
-    '''
+    Generates figures and table (with metrics) for one condition (clustering method - number of cluster - refinement or not)
+    Parameters:
+        adata : spatial transcriptomics data
+        col_label_true : column name that corresponds to the ground truth (list or str)
+        show ('True/False') : print directly the figures
+        '''
 
-    #identify the method, the number of cluster and the refinement condition (GraphST)
+    #identify the method, the number of cluster and the refinement condition (GraphST) from the column name
     p = clustering_colname.split('_')
     method = p[0]
     n_clusters_list = np.unique(adata.obs.loc[:,clustering_colname])
@@ -190,6 +208,16 @@ def final_table(df, show):
     return final_fig
 
 def line_plot(df, x, y, color, style, show):
+    '''
+    Generate line plot (used to visualize the metric variation in function of the number of clusters)
+    Parameters:
+        df : data
+        x : column that corresponds to the x axis 
+        y : columm that corresponds to the y axis
+        color
+        style
+        show
+    '''
     fig, ax = plt.subplots()
     sns.lineplot(data=df, x=x, y=y, hue=color, style=style, ax=ax)
     if y == 'silhouette average':
@@ -205,6 +233,7 @@ def line_plot(df, x, y, color, style, show):
 
 def loop_to_show_and_save(adata, col_label_true, show, filename=None):
     '''
+    Generate all the figures and tables for the different combinations of methods and numbers of clusters
     Parameters:
         - methods can be a string or a list of string
         - filename = name of the file where the figure will be saved
@@ -217,18 +246,21 @@ def loop_to_show_and_save(adata, col_label_true, show, filename=None):
 
     final_metric_table = []
 
+    #create a file
     if filename:
         with PdfPages(filename) as pdf:
-            for col in graphST_columns: 
-                figures, all_metrics = metrics_and_visualizations(adata, col, col_label_true, show)
+            for col in graphST_columns: #loop for all the combinations
+                figures, all_metrics = metrics_and_visualizations(adata, col, col_label_true, show) #generate the figures for one condition
                 final_metric_table.extend(all_metrics)
-                for fig in figures:
+                for fig in figures: #save the figures
                     pdf.savefig(fig)
 
-            final_table_df = pd.DataFrame(final_metric_table)
+            # create and save the table
+            final_table_df = pd.DataFrame(final_metric_table) 
             final_fig_table = final_table(final_table_df, show)
             pdf.savefig(final_fig_table)
 
+            # generate line plots for silhouette average and lisi metrics
             line_fig1 = line_plot(final_table_df, 'number of clusters', 'silhouette average', 'method', 'refinement', show)
             pdf.savefig(line_fig1)
             line_fig3 = line_plot(final_table_df, 'number of clusters', 'lisi average', 'method', 'refinement', show)

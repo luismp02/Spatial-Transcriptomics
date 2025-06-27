@@ -4,11 +4,11 @@ output: html_document
 date: "2025-04-09"
 params:
   input_file: '../../../datashare/PDAC/visium_PDAC'
-  thr_min: 2500
+  thr_min: 0
   thr_max: Inf
   basal_thr: 0.25
   classical_thr: 0.25
-  sample_name: 'Visium_FFPE_V43T08-051_D'
+  sample_name: 'Visium_FFPE_V44L23-391_A'
   working_dir: '../analysis/filtered_data'
 ---
 
@@ -146,11 +146,11 @@ uscore_plot <- wrap_plots(map1, map2)
 print(uscore_plot)
 ```
 
-```{r, eval=FALSE}
+```{r, eval=TRUE}
 plot(density(unlist(ucell_obj@meta.data$classical_UCell)), lwd = 2)
 ```
 
-```{r, eval=FALSE}
+```{r, eval=TRUE}
 plot(density(unlist(ucell_obj@meta.data$basal_UCell)), lwd = 2)
 ```
 
@@ -266,6 +266,7 @@ sctype_barplot <- ggplot(loc, aes(fill=`sctype label`, x = `uscore label`)) +
 
 print(sctype_barplot)
 ```
+
 ```{r}
 contingency_sctype_table <- table(loc$`uscore label`, loc$`sctype label`)
 contingency_sctype_table_with_totals <- addmargins(contingency_sctype_table)
@@ -284,6 +285,7 @@ sctype_ucell_plot <- ggplot(loc, aes(x = x, y = y)) +
 
 print(sctype_ucell_plot)
 ```
+
 ```{r sctype and uscore labelling combination}
 loc$'sctype + uscore label' <- loc$'sctype label'
 sctype_result@meta.data$'sctype_uscore' <- sctype_result@meta.data$'sctype_classification'
@@ -318,7 +320,6 @@ sctype_ucell_plot2 <- SpatialDimPlot(sctype_result, group.by="sctype_uscore", pt
   scale_fill_manual(values = final_colors, name ='ScType & Uscore annotation' ) 
 print(sctype_ucell_plot2)
 ```
-
 
 ### Annotation with Peng data
 

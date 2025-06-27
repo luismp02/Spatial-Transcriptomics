@@ -6,6 +6,7 @@ log.info "path to data directory : ${params.input_path}"
 log.info "sample name : ${params.sample_name}"
 log.info "count thresholds (min / max) : ${params.thr_min} / ${params.thr_max}"
 log.info "Ucell thresholds (basal / classical) : ${params.basal_thr} / ${params.classical_thr}"
+log.info "Number of clusters (min / max) : ${params.min_clust} - ${params.max_clust}"
 log.info "SRTsim seeds : ${params.seeds}"
 log.info "R installation path : ${params.r_path}"
 log.info "ouput (path): ${params.output}"
@@ -42,7 +43,7 @@ workflow {
 
         srtsim.out.simulated_data
             .combine(spatial_preprocessing.out.annotated_coordinates)
-            .map { sim, annot -> tuple(sim, annot, params.sample_name, path_to_dir, path_to_graphST_functions, params.r_path) }
+            .map { sim, annot -> tuple(sim, annot, params.sample_name, path_to_dir, path_to_graphST_functions, params.r_path, params.min_clust, params.max_clust) }
             | graphst_sim
 
         mv_sim(graphst_sim.out.clustered_data, path_to_dir, path_to_visualisation_functions)
@@ -50,7 +51,7 @@ workflow {
     
     spatial_preprocessing.out.filtered_matrix
         .combine(spatial_preprocessing.out.annotated_coordinates)
-        .map { filt, annot -> tuple(filt, annot, params.sample_name, path_to_dir, path_to_graphST_functions, params.r_path) }
+        .map { filt, annot -> tuple(filt, annot, params.sample_name, path_to_dir, path_to_graphST_functions, params.r_path, params.min_clust, params.max_clust) }
         | graphst_ref
 
     mv_ref(graphst_ref.out.clustered_data, path_to_dir, path_to_visualisation_functions)
