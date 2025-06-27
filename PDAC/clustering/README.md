@@ -75,4 +75,14 @@ To include a new metric for clustering assessment (in python):
 The different methods used are described in **M2-MEMOIRE-Marchand_Mehdi_2024-2025**.
 > Note: GraphST proposes an optional method to reassign the spots to the same cluster as those of the surrounding spots within a defined radius (=refinement).
 
+### Absence of clustering with Louvain and Leiden
 
+Louvain and Leiden graph-based methods identify clusters of varying sizes depending
+on the resolution parameter. A high resolution results in the identification of several
+small clusters, while a low resolution leads to the identification of fewer but larger
+clusters.
+In the context of GraphST, the model computes the clustering by decreasing the
+resolution from an initial value defined by the user until it identifies the number of
+clusters specified.
+
+Thus, try to increase the end parameter (i.e., the starting resolution) of the graphST_methods_loop function (`clustering.ipynb`) if no clustering result is obtained.
