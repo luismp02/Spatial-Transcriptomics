@@ -58,7 +58,7 @@ nextflow run filtering_clustering_pipeline.nf \
 ### Modifications
 
 Nextflow process can be added in the nf_modules directory and implemented in the filtering_clustering_pipeline.nf to implement a new clustering method.  
-Concerning metrics, python methods can be added in clustering_assesment/metrics_and_visualizations_functions.py (see the implemented ones, namely lisi_metrics, silhouette metrics, rand_index and adjusted_rand_index functions). The functions from metrics_and_visualizations_functions.py are executed in metrics_and_visualizaations.ipynb. If specific input are required to calculate the new metric, it must be specified in the nextflow pipeline and the metrics_and_visualization.nf module. 
+Concerning metrics, python methods can be added in clustering_assesment/metrics_and_visualizations_functions.py (see the implemented ones, namely lisi_metrics, silhouette metrics, rand_index and adjusted_rand_index functions). The functions from metrics_and_visualizations_functions.py are executed in metrics_and_visualizations.ipynb. If specific inputs are required to calculate the new metric, it must be specified in the nextflow pipeline and the metrics_and_visualization.nf module. 
 
 ### Methods
 
