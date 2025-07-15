@@ -11,6 +11,8 @@
 --thr_max  (maximum count cutoff to filter spots)
 --basal_thr  (basal Uscore threshold to define 'basal' spots)
 --classical_thr  (classical Uscore threshold to define 'classical' spots)
+--method (GraphST clustering methods: mclust,louvain,leiden)
+--refine (GraphST refinement step: True/False)
 --min_clust (minimal number of clusters)
 --max_clust (maximal number of clusters, such as min_clust to max_clust clusters will be generated)
 --output (output directory)
@@ -28,6 +30,8 @@ nextflow run filtering_clustering_pipeline.nf \
 --thr_max Inf \
 --basal_thr 0.25 \
 --classical_thr 0.25 \
+--method mclust,louvain,leiden \
+--refine True \
 --min_clust 2 \
 --max_clust 10 \
 --output nf_output \
