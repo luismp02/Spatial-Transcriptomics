@@ -57,12 +57,32 @@ nextflow run filtering_clustering_pipeline.nf \
 
 ### Modifications
 
-Nextflow process can be added in the nf_modules directory and implemented in the filtering_clustering_pipeline.nf to implement a new clustering method.  
-Concerning metrics, python methods can be added in clustering_assesment/metrics_and_visualizations_functions.py (see the implemented ones, namely lisi_metrics, silhouette metrics, rand_index and adjusted_rand_index functions). The functions from metrics_and_visualizations_functions.py are executed in metrics_and_visualizaations.ipynb. If specific input are required to calculate the new metric, it must be specified in the nextflow pipeline and the metrics_and_visualization.nf module. 
+#### Adding a new clustering method
+
+To implement a new clustering method:
+- Add a new **Nextflow process** in the `nf_modules` directory.
+- Integrate the process in the `filtering_clustering_pipeline.nf` file.
+
+#### Adding a new metric
+
+To include a new metric for clustering assessment (in python):
+- Add the method in `clustering_assessment/metrics_and_visualizations_functions.py` (see the implemented metrics, namely lisi_metrics, silhouette metrics, rand_index and adjusted_rand_index functions)
+- The functions fron this file are exectued in `metrics_and_visualizations.ipynb`.
+- If your new metric requires specific inputs specify these in the Nextflow pipeline and update the `metrics_and_visualization.nf` module accordingly.
 
 ### Methods
 
-The different methods used are described in M2-MEMOIRE-Marchand_Mehdi_2024-2025.
-Note: GraphST proposes an optional method to reassign the spots to the same cluster as those of the surrounding spots within a defined radius (=refinement).
+The different methods used are described in **M2-MEMOIRE-Marchand_Mehdi_2024-2025**.
+> Note: GraphST proposes an optional method to reassign the spots to the same cluster as those of the surrounding spots within a defined radius (=refinement).
 
+### Absence of clustering with Louvain and Leiden
 
+Louvain and Leiden graph-based methods identify clusters of varying sizes depending
+on the resolution parameter. A high resolution results in the identification of several
+small clusters, while a low resolution leads to the identification of fewer but larger
+clusters.
+In the context of GraphST, the model computes the clustering by decreasing the
+resolution from an initial value defined by the user until it identifies the number of
+clusters specified.
+
+Thus, try to increase the end parameter (i.e., the starting resolution) of the graphST_methods_loop function (`clustering.ipynb`) if no clustering result is obtained.
