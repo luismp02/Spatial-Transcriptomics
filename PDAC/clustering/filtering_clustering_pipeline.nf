@@ -6,7 +6,9 @@ log.info "path to data directory : ${params.input_path}"
 log.info "sample name : ${params.sample_name}"
 log.info "count thresholds (min / max) : ${params.thr_min} / ${params.thr_max}"
 log.info "Ucell thresholds (basal / classical) : ${params.basal_thr} / ${params.classical_thr}"
+log.info "Clustering methods (mclust, louvain, leiden) : ${params.method}"
 log.info "Number of clusters (min / max) : ${params.min_clust} - ${params.max_clust}"
+log.info "Refinement (True/False) : ${params.refine}"
 log.info "SRTsim seeds : ${params.seeds}"
 log.info "R installation path : ${params.r_path}"
 log.info "ouput (path): ${params.output}"
@@ -43,7 +45,7 @@ workflow {
 
         srtsim.out.simulated_data
             .combine(spatial_preprocessing.out.annotated_coordinates)
-            .map { sim, annot -> tuple(sim, annot, params.sample_name, path_to_dir, path_to_graphST_functions, params.r_path, params.min_clust, params.max_clust) }
+            .map { sim, annot -> tuple(sim, annot, params.sample_name, path_to_dir, path_to_graphST_functions, params.r_path, params.min_clust, params.max_clust, params.method, params.refine) }
             | graphst_sim
 
         mv_sim(graphst_sim.out.clustered_data, path_to_dir, path_to_visualisation_functions)
@@ -51,15 +53,17 @@ workflow {
     
     spatial_preprocessing.out.filtered_matrix
         .combine(spatial_preprocessing.out.annotated_coordinates)
-        .map { filt, annot -> tuple(filt, annot, params.sample_name, path_to_dir, path_to_graphST_functions, params.r_path, params.min_clust, params.max_clust) }
+        .map { filt, annot -> tuple(filt, annot, params.sample_name, path_to_dir, path_to_graphST_functions, params.r_path, params.min_clust, params.max_clust, params.method, params.refine) }
         | graphst_ref
 
     mv_ref(graphst_ref.out.clustered_data, path_to_dir, path_to_visualisation_functions)
 
-    path_list  = mv_ref.out.final_table
-        .combine(mv_sim.out.final_table.collect())
-    
-    path_list.set { combinedChannel }
-    
-    final_figures(path_list, params.sample_name)
+    if (params.seeds){
+        path_list  = mv_ref.out.final_table
+            .combine(mv_sim.out.final_table.collect())
+        
+        path_list.set { combinedChannel }
+        
+        final_figures(path_list, params.sample_name, params.refine)
+    }
 }

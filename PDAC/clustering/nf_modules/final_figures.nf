@@ -5,6 +5,7 @@ process final_figures{
     input:
     path(metrics_files)
     val(sample_name)
+    val(refine)
 
     output:
     path "*final_graphs.pdf"
@@ -16,7 +17,8 @@ process final_figures{
     echo "metrics_files: \$path_list" 
     papermill ~/Project/Spatial-Transcriptomics/PDAC/clustering/clustering_assessment/final_graph.ipynb \
         -p sample_name ${sample_name} \
-        -p table_list \$path_list
+        -p table_list \$path_list \
+        -p refine ${refine}
     deactivate
     """
 }

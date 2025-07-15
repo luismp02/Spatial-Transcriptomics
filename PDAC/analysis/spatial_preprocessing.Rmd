@@ -1,14 +1,13 @@
 ---
 title: "Spatial Preprocessing and annotation"
 output: html_document
-date: "2025-04-09"
 params:
-  input_file: '../../../datashare/PDAC/visium_PDAC'
-  thr_min: 0
+  input_file: '~/Project/datashare/PDAC/visium_PDAC'
+  thr_min: 900
   thr_max: Inf
-  basal_thr: 0.25
-  classical_thr: 0.25
-  sample_name: 'Visium_FFPE_V44L23-391_A'
+  basal_thr: 0.14
+  classical_thr: 0.18
+  sample_name: 'Visium_FFPE_V43T08-041_A'
   working_dir: '../analysis/filtered_data'
 ---
 
@@ -24,6 +23,11 @@ basal_Ucell_threshold <- params$basal_thr
 classical_Ucell_threshold <- params$classical_thr
 sample_name <- params$sample_name
 working_dir <- params$working_dir
+```
+
+```{r}
+print(basal_Ucell_threshold)
+print(classical_Ucell_threshold)
 ```
 
 ```{r path definition, eval=TRUE}
@@ -61,9 +65,6 @@ if(file.exists(paste0(path, 'spatial/tissue_positions_list.csv'))){
 }
 
 data <- Load10X_Spatial(data.dir = path, filename= 'filtered_feature_bc_matrix.h5')
-
-#uscore_final_table <- NA
-#uscore_final_table <- read.csv('all_UScores', row.names = 1)
 ```
 
 # Filtering
@@ -99,15 +100,7 @@ write.csv(t(filtered_count), file = file.path(working_dir, filtered_matrix), row
 
 ```{r normalization}
 options(future.globals.maxSize = 8000 * 1024^2)
-normalized_data <- SCTransform(filtered_data, assay = "Spatial", verbose = FALSE)
-normalized_data <- RunPCA(normalized_data, assay = "SCT", verbose = FALSE)
-normalized_data <- FindNeighbors(normalized_data, reduction = "pca", dims = 1:30, verbose = FALSE)
-normalized_data <- FindClusters(normalized_data, verbose = FALSE)
-normalized_data <- RunUMAP(normalized_data, reduction = "pca", dims = 1:30, verbose = FALSE)
-```
-
-```{r gene expression visualization, eval=FALSE}
-SpatialFeaturePlot(normalized_data, features = c("TFF1", "SPRR3"), pt.size.factor = 3)
+normalized_data <- SCTransform(filtered_data, assay = "Spatial", verbose = FALSE, return.only.var.genes = FALSE)
 ```
 
 # Annotation
@@ -144,33 +137,6 @@ map2 <- SpatialFeaturePlot(ucell_obj, features = signature.names[2], pt.size.fac
 
 uscore_plot <- wrap_plots(map1, map2)
 print(uscore_plot)
-```
-
-```{r, eval=TRUE}
-plot(density(unlist(ucell_obj@meta.data$classical_UCell)), lwd = 2)
-```
-
-```{r, eval=TRUE}
-plot(density(unlist(ucell_obj@meta.data$basal_UCell)), lwd = 2)
-```
-
-
-```{r, eval=FALSE}
-Uscore_table <- ucell_obj@meta.data[,c('classical_UCell', 'basal_UCell')]
-Uscore_table$data <- sample_name
-rownames(Uscore_table) <- paste0(rownames(Uscore_table),'_',sample_name)
-dim(uscore_final_table)
-uscore_final_table <- rbind(uscore_final_table, Uscore_table)
-dim(uscore_final_table)
-write.csv(uscore_final_table, file = 'all_UScores', row.names = TRUE)
-```
-
-```{r, eval=FALSE}
-plot(density(unlist(uscore_final_table$classical_UCell)), lwd = 2)
-```
-
-```{r, eval=FALSE}
-plot(density(unlist(uscore_final_table$basal_UCell)), lwd = 2)
 ```
 
 ```{r filtering based on specific marker, eval = FALSE}
@@ -266,7 +232,6 @@ sctype_barplot <- ggplot(loc, aes(fill=`sctype label`, x = `uscore label`)) +
 
 print(sctype_barplot)
 ```
-
 ```{r}
 contingency_sctype_table <- table(loc$`uscore label`, loc$`sctype label`)
 contingency_sctype_table_with_totals <- addmargins(contingency_sctype_table)
@@ -285,7 +250,6 @@ sctype_ucell_plot <- ggplot(loc, aes(x = x, y = y)) +
 
 print(sctype_ucell_plot)
 ```
-
 ```{r sctype and uscore labelling combination}
 loc$'sctype + uscore label' <- loc$'sctype label'
 sctype_result@meta.data$'sctype_uscore' <- sctype_result@meta.data$'sctype_classification'
@@ -320,6 +284,7 @@ sctype_ucell_plot2 <- SpatialDimPlot(sctype_result, group.by="sctype_uscore", pt
   scale_fill_manual(values = final_colors, name ='ScType & Uscore annotation' ) 
 print(sctype_ucell_plot2)
 ```
+
 
 ### Annotation with Peng data
 

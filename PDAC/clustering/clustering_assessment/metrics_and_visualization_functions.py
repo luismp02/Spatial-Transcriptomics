@@ -164,7 +164,7 @@ def metrics_and_visualizations(adata, clustering_colname, col_label_true=None, s
     lisi_avg = clustered_distribution_plot(ax4, lisi_values, cluster_labels, 'LISI scores')
 
     # table
-    metrics = {'method': method, 'refinement': refinement, 'number of clusters': n_clusters, 'silhouette average': round(silhouette_avg,3), 'lisi average': round(lisi_avg,3)}
+    metrics = {'method': method, 'refinement': refinement, 'number of clusters': n_clusters, 'silhouette average': round(float(silhouette_avg),3), 'lisi average': round(lisi_avg,3)}
     if col_label_true: 
         if isinstance(col_label_true, str):
             col_label_true = [col_label_true]

@@ -35,7 +35,7 @@ def data_preprocessing(count_data, spatial_data, typ='filtered'):
     adata.obsm['spatial'] = adata.obsm['spatial'].astype('float64')
     return adata, col_label_true
 
-def graphST_clustering(adata, method, n_clusters_list, start, end, refinement=True):
+def graphST_clustering(adata, method, n_clusters_list, start, end, refinement):
     '''
     refinement (False or True) = label re-assignment as the same domain as the most common label of its surronding spots (based on radius)
     if refinement = True, it generates a {method}_{n_clusters}_refined column in addition to the {method}_{n_clusters} column
@@ -55,6 +55,11 @@ def graphST_methods_loop(adata, methods, n_clusters_list, start, end, refinement
         - methods can be a string or a list of string 
         - refinement: True/False
     '''
+    if refinement == 'true': #correct the nextflow parameter
+        refinement = True
+    elif refinement == 'false':
+        refinement = False
+
     if isinstance(methods, str):
         methods = [methods]
         

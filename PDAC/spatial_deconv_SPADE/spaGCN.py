@@ -21,24 +21,36 @@ import cv2
 import sys
 import anndata
 
-## == Set parameters == ##
-sample_name="Visium_FFPE_V43T08-051_D"
-sample_dir="/home/genouest/cnrs_umr6290/mgauth/real_data/"
-out_dir="/home/genouest/cnrs_umr6290/mgauth/out/outSpaGCN/"
+## == Function == ##
+def get_spatial_input(input_dir):
+    '''define the path to 10X sample directory'''
+    for subdir in ["outs", "outs_old"]:
+        spatial_path = os.path.join(input_dir, subdir)
+        if os.path.isdir(spatial_path):
+            return spatial_path    
+    raise FileNotFoundError(f"{input_dir} does not correspond to the expected form (expect 'outs' or 'outs_old' subdirectory)")
 
+## == Set parameters == ##
+sample_name="Visium_FFPE_V43T08-051_A"
+sample_dir=f"/Users/memarchand/Project/datashare/PDAC/visium_PDAC/{sample_name}"
+
+spatial_input = get_spatial_input(sample_dir)
+print(spatial_input)
+filtered_data_input = '/Users/memarchand/Project/Spatial-Transcriptomics/PDAC/clustering/nf_output/data/Visium_FFPE_V43T08-051_A_filtered.csv'
+
+out_dir="./outSpaGCN/"
 
 
 ## == Convert csv to h5ad and save h5ad file == ##
-df = pd.read_csv(f"{sample_dir}{sample_name}/filtered_data/{sample_name}_filtered_normalized.csv", index_col=0)
+df = pd.read_csv(filtered_data_input, index_col=0)
 adata = anndata.AnnData(X=df.values)
 adata.obs_names = df.index
 adata.var_names = df.columns
 adata.write_h5ad(f'{out_dir}{sample_name}_filtered_normalized.h5ad')
 
 
-
 ## == Load data == ##
-spatial=pd.read_csv(f"{sample_dir}{sample_name}/outs/spatial/tissue_positions.csv",sep=",",header=0,na_filter=False,index_col=0) 
+spatial=pd.read_csv(f"{spatial_input}/spatial/tissue_positions.csv",sep=",",header=0,na_filter=False,index_col=0) 
 
 adata.obs["x1"] = spatial["in_tissue"]
 adata.obs["x2"] = spatial["array_row"]
@@ -58,7 +70,7 @@ adata.write_h5ad(f"{out_dir}{sample_name}_sample_data.h5ad")
 adata=sc.read(f"{out_dir}{sample_name}_sample_data.h5ad")
 
 #Read in hitology image
-img=cv2.imread(f"{sample_dir}{sample_name}/outs/spatial/cytassist_image.tiff")
+img=cv2.imread(f"{spatial_input}/spatial/cytassist_image.tiff")
 
 #Set coordinates
 x_array=adata.obs["x_array"].tolist()
