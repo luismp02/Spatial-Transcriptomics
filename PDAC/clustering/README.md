@@ -89,4 +89,4 @@ In the context of GraphST, the model computes the clustering by decreasing the
 resolution from an initial value defined by the user until it identifies the number of
 clusters specified.
 
-Thus, try to increase the end parameter (i.e., the starting resolution) of the graphST_methods_loop function (`clustering.ipynb`) if no clustering result is obtained.
+Thus, if no clustering result is obtained try to increase the end parameter (i.e., the starting resolution) of the graphST_methods_loop function (`clustering.ipynb`).
