@@ -31,12 +31,12 @@ def get_spatial_input(input_dir):
     raise FileNotFoundError(f"{input_dir} does not correspond to the expected form (expect 'outs' or 'outs_old' subdirectory)")
 
 ## == Set parameters == ##
-sample_name="Visium_FFPE_V43T08-051_A"
+sample_name="Visium_FFPE_V44L01-325_A"
 sample_dir=f"/Users/memarchand/Project/datashare/PDAC/visium_PDAC/{sample_name}"
 
 spatial_input = get_spatial_input(sample_dir)
 print(spatial_input)
-filtered_data_input = '/Users/memarchand/Project/Spatial-Transcriptomics/PDAC/clustering/nf_output/data/Visium_FFPE_V43T08-051_A_filtered.csv'
+filtered_data_input = f'/Users/memarchand/Project/Spatial-Transcriptomics/PDAC/clustering/nf_output/data/{sample_name}_filtered.csv'
 
 out_dir="./outSpaGCN/"
 

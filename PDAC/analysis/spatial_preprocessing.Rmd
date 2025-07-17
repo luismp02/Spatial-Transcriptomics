@@ -285,95 +285,6 @@ sctype_ucell_plot2 <- SpatialDimPlot(sctype_result, group.by="sctype_uscore", pt
 print(sctype_ucell_plot2)
 ```
 
-
-### Annotation with Peng data
-
-```{r load peng PDAC data, eval=FALSE}
-#peng_sc <- readRDS("../../../datashare/genref_hadaca3/00_peng_k_2019.rds")
-purist_peng_sc <- readRDS("../../../datashare/genref_hadaca3/peng_sub.rds")
-```
-
-```{r, eval=FALSE}
-sc_ref[["percent.mt"]] <- PercentageFeatureSet(sc_ref, pattern = "^MT-")
-sc_temp <- sc_ref
-Idents(sc_temp) <- "all_cells"
-VlnPlot(sc_temp, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
-```
-
-```{r, eval=FALSE}
-plot1 <- FeatureScatter(sc_temp, feature1 = "nCount_RNA", feature2 = "percent.mt")
-plot2 <- FeatureScatter(sc_temp, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
-plot1 + plot2
-```
-
-```{r, eval=FALSE}
-VlnPlot(sc_ref_normalized, features = c('KRT19', 'PRSS1'), group.by ='cell_type')
-```
-
-```{r  integration functions}
-data_normalization <- function(data){
-  normalized_data <- SCTransform(data, ncells = 5000, verbose = FALSE) %>%
-      RunPCA(verbose = FALSE) %>%
-      #FindNeighbors(dims = 1:30, verbose = FALSE) %>%
-      #FindClusters(verbose = FALSE) %>%
-      RunUMAP(dims = 1:30, verbose = FALSE)
-  return(normalized_data)}
-
-single_cell_integration <- function(normalized_ref_data, normalized_query_data, label_column, new_colname){
-  anchors <- FindTransferAnchors(reference = normalized_ref_data, 
-                                 query = normalized_query_data, 
-                                 #recompute
-                                 dims = 1:30, 
-                                 reference.reduction = "pca",
-                                 normalization.method = "SCT",
-                                 project.query = FALSE)
-
-  predictions <- TransferData(anchorset = anchors, refdata=normalized_ref_data@meta.data[[label_column]], weight.reduction = normalized_query_data[['pca']], dims = 1:30)
-  
-  normalized_query_data <- AddMetaData(normalized_query_data, metadata = predictions)
-  
-  names(normalized_query_data@meta.data)[names(normalized_query_data@meta.data) == "predicted.id"] <- new_colname
-  
-  return(normalized_query_data)
-}
-```
-
-```{r integration, eval=FALSE}
-#normalized_peng_data <- data_normalization(peng_sc)
-#normalized_data <- single_cell_integration(normalized_peng_data, normalized_data, 'cell_type', 'peng_original_data')
-
-normalized_purist_peng_data <- data_normalization(purist_peng_sc)
-#normalized_data <- single_cell_integration(normalized_purist_peng_data, normalized_data, 'cell_type', 'peng_subset')
-normalized_data <- single_cell_integration(normalized_purist_peng_data, normalized_data, 'hadaca3', 'purist_peng')
-```
-
-
-```{r, eval=FALSE}
-#peng_original_plot <- SpatialDimPlot(normalized_data, group.by="peng_original_data", pt.size.factor = 3, image.alpha = 0.4)
-#peng_subset_plot <- SpatialDimPlot(normalized_data, group.by="peng_subset", pt.size.factor = 3, image.alpha = 0.4)
-purist_peng_plot <- SpatialDimPlot(normalized_data, group.by="purist_peng", pt.size.factor = 3, image.alpha = 0.4)
-#peng_annot_plots <- wrap_plots(peng_original_plot, peng_subset_plot)
-print(purist_peng_plot)
-```
-
-
-```{r, eval=FALSE}
-#loc$'peng original' <-  normalized_data$peng_original_data[rownames(loc)]
-loc$'purist peng' <-  normalized_data$purist_peng[rownames(loc)]
-```
-
-```{r, eval=FALSE}
-peng_barplot2 <- ggplot(loc, aes(fill=`purist peng`, x = `uscore label`)) +
-         geom_bar(position = "stack")
-print(peng_barplot2)
-```
-
-```{r, eval=FALSE}
-contingency_seurat_table <- table(loc$`uscore label`, loc$`purist peng`)
-contingency_seurat_table_with_totals <- addmargins(contingency_seurat_table)
-write.csv(contingency_seurat_table_with_totals, file = file.path(working_dir, cont_table_seurat), row.names = TRUE)
-```
-
 ```{r saving spatial annotated data, eval=TRUE}
 write.csv(loc, file = file.path(working_dir, annotated_coordinates), row.names = TRUE)
 ```
@@ -385,10 +296,5 @@ print(sctype_plot)
 print(sctype_barplot)
 print(sctype_ucell_plot)
 print(sctype_ucell_plot2)
-#print(peng_original_plot)
-#print(peng_subset_plot)
-#print(purist_peng_plot)
-#print(peng_barplot)
-#print(peng_barplot2)
 dev.off()
 ```
