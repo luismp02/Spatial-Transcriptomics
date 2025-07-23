@@ -11,9 +11,10 @@ process metrics_and_visualization {
     path "*.pdf", emit : figures
     path "*.csv", emit : final_table
 
+
+    //source ${path_to_dir}/clustering/envrt_clustering/bin/activate
     script:
     """
-    source ${path_to_dir}/clustering/envrt_clustering/bin/activate
     papermill ${path_to_dir}/clustering/clustering_assessment/metrics_and_visualization.ipynb \
         -p clustered_data ${clustered_data} \
     deactivate

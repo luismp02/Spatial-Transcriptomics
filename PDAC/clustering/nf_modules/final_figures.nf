@@ -10,9 +10,9 @@ process final_figures{
     output:
     path "*final_graphs.pdf"
 
+    //source ~/Project/Spatial-Transcriptomics/PDAC/clustering/envrt_clustering/bin/activate
     script:
     """
-    source ~/Project/Spatial-Transcriptomics/PDAC/clustering/envrt_clustering/bin/activate
     path_list=\$(echo ${metrics_files} | sed "s/ /','/g" | sed "s/^/['/" | sed "s/\$/']/")
     echo "metrics_files: \$path_list" 
     papermill ~/Project/Spatial-Transcriptomics/PDAC/clustering/clustering_assessment/final_graph.ipynb \

@@ -8,9 +8,9 @@ process graphst {
     output:
     path "*_clustered.h5ad", emit : clustered_data
 
+    //source ${path_to_dir}/clustering/envrt_clustering/bin/activate
     script:
     """
-    source ${path_to_dir}/clustering/envrt_clustering/bin/activate
     papermill ${path_to_dir}/clustering/GraphST_clustering/clustering.ipynb \
         -p filtered_count_data ${filtered_count_data} \
         -p spatial_data ${spatial_data} \
