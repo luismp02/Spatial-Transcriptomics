@@ -122,7 +122,7 @@ awk 'BEGIN {FS=OFS="\t"} {if (NF == 9) print $0}' Gbi_Genes.gtf > Gbi_Genes_clea
 # Sample A/B/C/D
 ~/projects/spaceranger-3.1.2/spaceranger count \
   --id=Sample_IAB \
-  --transcriptome= transcriptome_path #/gbim1/Annotation/Genes/ # Repo with gff3 and .mRNA
+  --transcriptome= transcriptome_path #/gbim1/Annotation/Genes/ # Repo output mkref (fasta genes star reference.json)
   --fastqs=/home/martinpl/projects/datashare/grillus/2/A \ # Repo with 2 FASTQs / sample
   --sample=GMRS238 \   #38/39/40/41
   --image= Image_path
