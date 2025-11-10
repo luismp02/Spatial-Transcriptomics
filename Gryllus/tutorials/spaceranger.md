@@ -116,6 +116,22 @@ awk 'BEGIN {FS=OFS="\t"} {if (NF == 9) print $0}' Gbi_Genes.gtf > Gbi_Genes_clea
   --create-bam=false
 ```
 
+#### count multiple slides
+
+```bash
+# Sample A/B/C/D
+~/projects/spaceranger-3.1.2/spaceranger count \
+  --id=Sample_IAB \
+  --transcriptome= path #IAB/gbim1/Annotation/Genes/ # Repo with gff3 et .mRNA
+  --fastqs=/home/martinpl/projects/datashare/grillus/2/A \ # Repo with 2 FASTQs / sample
+  --sample=GMRS238 \   #38/39/40/31
+  --image= Image_path
+  --slide=V13B16-384 \ #same for each
+  --area=A1 \ #B1/C1/D1
+  --create-bam=false
+
+```
+
 ## Output overview
 
 | Output                        | Description                                                                 |
