@@ -16,25 +16,29 @@ samples = ["SampleA_IAB", "SampleC_IAB", "SampleD_IAB"]
 # load
 adatas = {}
 for s in samples:
-    p = base / s / "outs"
-    sp = p / "spatial"
+    count_path = base / s / "outs"
+    spatial_path = count_path / "spatial"
 
-    ad = sc.read_visium(path=p, count_file="filtered_feature_bc_matrix.h5")
+    ad = sc.read_visium(path=count_path, count_file="filtered_feature_bc_matrix.h5")
     ad.obs["sample"] = s
 
-    pos = pd.read_csv(sp / "tissue_positions.csv", header=None)
-    pos.columns = ["barcode","in","row","col","px","py"]
-    pos = pos.set_index("barcode").loc[ad.obs_names]
+    positions = pd.read_csv(spatial_path / "tissue_positions.csv", header=None)
+    positions.columns = ["barcode","in_tissue","array_row","array_col",
+                         "pxl_row_in_fullres","pxl_col_in_fullres"]
+    positions = positions.set_index("barcode").loc[ad.obs_names]
 
-    ad.obs["px"] = pd.to_numeric(pos["py"], errors="coerce")
-    ad.obs["py"] = pd.to_numeric(pos["px"], errors="coerce")
+    ad.obs["pxl_row_in_fullres"] = pd.to_numeric(positions["pxl_row_in_fullres"], errors="coerce")
+    ad.obs["pxl_col_in_fullres"] = pd.to_numeric(positions["pxl_col_in_fullres"], errors="coerce")
 
-    img = Image.open(sp / "tissue_hires_image.png")
-    sf = json.load(open(sp / "scalefactors_json.json"))["tissue_hires_scalef"]
+    img = Image.open(spatial_path / "tissue_hires_image.png")
+    with open(spatial_path / "scalefactors_json.json") as f:
+        scale_factor = json.load(f)["tissue_hires_scalef"]
 
-    ad.obs["X_pixel"] = ad.obs["py"] * sf
-    ad.obs["Y_pixel"] = ad.obs["px"] * sf
-    ad.uns["img"] = np.array(img)
+    ad.obs["X_pixel"] = ad.obs["pxl_col_in_fullres"] * scale_factor
+    ad.obs["Y_pixel"] = ad.obs["pxl_row_in_fullres"] * scale_factor
+
+    ad.uns["img"] = np.array(img)      
+    ad.uns["image_size"] = img.size
 
     adatas[s] = ad
 
