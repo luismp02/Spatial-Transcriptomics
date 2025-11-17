@@ -68,40 +68,68 @@ xg = [g for g in genes if gene_chr.get(g) == "chrX"]
 ag = [g for g in genes if gene_chr.get(g,"").startswith("chr") and gene_chr.get(g)!="chrX"]
 
 # log-ratio
+# norm
+
 for s, ad in adatas.items():
     xp = [g for g in xg if g in ad.var_names]
     ap = [g for g in ag if g in ad.var_names]
-    if not xp or not ap: continue
+    if not xp or not ap: 
+        continue
 
+    # sums
     Xs = ad[:, xp].X.sum(axis=1)
+    print(Xs)
     As = ad[:, ap].X.sum(axis=1)
+    print(As)
+    Ts = ad.X.sum(axis=1)
+
+    # arr
     if hasattr(Xs, "A1"):
         Xs = Xs.A1
         As = As.A1
+        Ts = Ts.A1
 
-    rat = Xs / (As + 1e-6)
-    log = np.log1p(rat)
+    # frac
+    Xn = Xs / (Ts)
+    An = As / (Ts)
 
-    ad.obs["X_ratio"] = rat
-    ad.obs["log_X_ratio"] = log
+    # ratio
+    Rn = Xn / (An)
+    #Ln = np.log1p(Rn)
+    Ln = np.log(Rn)
+    print(Ln)
+
+    # save
+    ad.obs["Xn"] = Xn
+    ad.obs["An"] = An
+    ad.obs["Xn_ratio"] = Rn
+    ad.obs["log_Xn_ratio"] = Ln
+    ad.obs["total_UMI"] = Ts
 
     img = ad.uns["img"]
 
     # plot MAIN
     plt.figure(figsize=(6,6))
     plt.imshow(img)
-    plt.scatter(ad.obs["X_pixel"], ad.obs["Y_pixel"], c=log, s=8, cmap="inferno")
+    sc = plt.scatter(ad.obs["X_pixel"], ad.obs["Y_pixel"], 
+                    c=ad.obs["log_Xn_ratio"], s=8, cmap="inferno", alpha=0.9)
     plt.axis("off")
+
+    cbar = plt.colorbar(sc, fraction=0.046, pad=0.04)
+    cbar.set_label("log(Xn/An)", fontsize=9)
+
+    plt.tight_layout()
     plt.show()
+
 
     # scatter
     plt.figure(figsize=(6,6))
-    plt.scatter(auto_sum, X_sum, c=log_X_ratio, cmap="plasma", alpha=0.6, s=10)
-    plt.xlabel("Autosome expression")
-    plt.ylabel("chrX expression")
-    plt.title(f"{s} – Scatter log-colored")
+    plt.scatter(An, Xn, c=Ln, cmap="plasma", alpha=0.6, s=10)
+    plt.xlabel("Autosome (norm)")
+    plt.ylabel("chrX (norm)")
+    plt.title(f"{s} – Scatter log-normalized")
     plt.grid(True)
-    plt.colorbar(fraction=0.046, pad=0.04, label="log(X/autosome)")
+    plt.colorbar(fraction=0.046, pad=0.04, label="log(Xn/An)")
     plt.tight_layout()
     plt.show()
 
@@ -109,25 +137,25 @@ for s, ad in adatas.items():
     plt.figure(figsize=(8,8))
     plt.imshow(img)
     plt.scatter(ad.obs["X_pixel"], ad.obs["Y_pixel"],
-                c=ad.obs["total_expr"], cmap="viridis", s=10, alpha=0.8)
-    plt.title(f"{s} – Total expression")
+                c=ad.obs["total_UMI"], cmap="viridis", s=10, alpha=0.8)
+    plt.title(f"{s} – Total UMI")
     plt.axis("off")
-    plt.colorbar(fraction=0.046, pad=0.04, label="Total expression")
+    plt.colorbar(fraction=0.046, pad=0.04, label="Total UMI")
     plt.tight_layout()
     plt.show()
 
     # corr
     plt.figure(figsize=(6,6))
-    plt.scatter(ad.obs["total_expr"], ad.obs["log_X_ratio"], alpha=0.5, s=10)
-    plt.xlabel("Total expression")
-    plt.ylabel("log(X/autosome)")
-    plt.title(f"{s} – Corrélation total vs ratio")
+    plt.scatter(ad.obs["total_UMI"], ad.obs["log_Xn_ratio"], alpha=0.5, s=10)
+    plt.xlabel("Total UMI")
+    plt.ylabel("log(Xn/An)")
+    plt.title(f"{s} – Corr total vs log-ratio")
     plt.grid(True)
     plt.tight_layout()
     plt.show()
 
 
-
+'''
 # leiden clustering
 for s, ad in adatas.items():
     try:
@@ -176,3 +204,5 @@ for s, ad in adatas.items():
 
     except Exception as e:
         print("err:", e)
+        
+'''
