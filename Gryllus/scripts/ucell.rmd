@@ -149,7 +149,7 @@ for (feat in features_to_plot) {
 gene_dict <- read_csv(file.path(data_path, "liste_gene_and_code.csv")) %>%
   mutate(
     gene_name = tolower(str_trim(gene_name)),
-    gene_id   = tolower(str_replace_all(str_trim(gene_id), "_", "-"))  # 🔥 la línea clave
+    gene_id   = tolower(str_replace_all(str_trim(gene_id), "_", "-"))  
   )
 
 # Signaling
