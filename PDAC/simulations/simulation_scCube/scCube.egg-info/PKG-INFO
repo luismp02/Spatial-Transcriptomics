@@ -1,0 +1,8 @@
+Metadata-Version: 2.1
+Name: scCube
+Version: 2.0.0
+Home-page: https://github.com/ZJUFanLab/scCube
+Author: Jingyang Qian
+Author-email: qianjingyang@zju.edu.cn
+License: GNU General Public License v3.0
+Requires-Python: >=3.8

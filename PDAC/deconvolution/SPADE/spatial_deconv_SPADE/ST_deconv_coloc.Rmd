@@ -1,0 +1,189 @@
+---
+title: "ST_deconv_coloc"
+author: "Madeleine Gautheret"
+date: "June 2025"
+output: html_document
+editor_options: 
+  markdown:
+    wrap: 72
+---
+```{r, parameters }
+working_dir<-[path to working directory] #Directory where inputs are stored 
+
+out_dir<-[path to output directory] #Directory where outputs should be stored
+
+sample_name<-[sample name] #string
+
+spatial_matrix<-[path to spatial matrix] #should be a seurat object (RDS format)
+
+sc_reference<- [path to single cell expression matrix] #matrix should be an expressionSet class contains single cell gene expression and its metadata which contains annoted cell type (RDS format)
+
+all_markers<-[path to markers lists] #markers should be one list per cell type (RDS format)
+
+tissue_position<-[path to barcode coordinates] # matrix should contain one row per barcode, with 2 columns : x coordinate and y coordinate. (CSV format)
+
+nclust=[number of cluster identified within the sample] #nclust should be an integer
+
+colors = [Optional, color palette for each cell types] #colors should be a named vector for each cell type e.g. colors = c("Celltype1"="color1", "Celltype2"="color2",...) If not provided colors are defined by default. 
+```
+
+
+```{r, library loading }
+#!/usr/bin/env Rscript 
+library(tidyverse)
+library(SPADE)
+library(Biobase)
+library(Seurat)
+library(scatterpie)
+library(pheatmap)
+```
+
+
+```{r, data loading}
+setwd(working_dir)
+spaData<-readRDS(spatial_matrix)
+sc<-readRDS(sc_reference)
+markers<-readRDS(all_markers)
+location <-read.csv(tissue_position)
+```
+
+
+```{r, create reference matrix}
+#SPADE relies on single cell reference data to compute cell proportion, scRefer creates a matrix containing gene expression for each cell type based on the given single-cell data. 
+
+scref=scRefer(input_data=sc, 
+              ct_var="cellType",#ct_var : variable name for cell type column
+              sample_var="orig.ident") #sample_var : variable name for sample column
+
+```
+
+
+```{r, estimate coefficients for each cell types for each spatial domain}
+#SPADE estimates coefficient for each cell type in each spots based on the single-cell reference matrix computed before 
+
+marker_list=unlist(markers) 
+pseudo.spatial<-GetAssayData(spaData, assay= "RNA", slot= "counts") #extraction of the spatial expression matrix
+pseudo.spatial<-as.matrix(pseudo.spatial) 
+nlay=max(location$domain)
+
+
+#Estimate cell type coefficients at each location by LASSO or Elastic Net regression
+CTperLayer=CTperDom(
+  loc=location,
+  stcount=pseudo.spatial,
+  scref=scref,
+  sign_list=marker_list,
+  lasso=F) #lasso=F for ElasticNet regression, lasso=T for Lasso regression 
+
+#CTperLayer = a matrix contains coefficients for each cell type at each location
+
+```
+
+
+```{r, deconvolution for each spatial domains}
+# SPADE uses the previously estimated coefficients to compute the relative proportions of each cell type across spatial locations within each domain.
+CTest=SPADE(
+  stcount=pseudo.spatial,
+  scref=scref,
+  sign_list=markers,
+  loc=location,
+  ctData=CTperLayer, # the estimated cell type per domain
+  offset=10) # Offset is the value add on the threshold to binarize coefficient from lasso regression, if not provide by user, then use the mean of all coefficients
+```
+
+
+```{r, integration of deconvolution results in each domain and visualisation}
+#CTest contains cell type proportion for each spatial domain (one layer per domain), all layers are integrated to create the deconvolution results matrix 
+all_rownames <- unlist(lapply(seq_len(nclust), function(i) rownames(CTest[[i]]))) #extract all rownames across all spatial domains
+all_colnames <- unique(unlist(lapply(CTest[1:nclust], colnames)))#extract all colnames across all spatial domains
+estCT=matrix(0,ncol = length(all_colnames),length(all_rownames))#create empty matrix where deconvolution results should be stored 
+rownames(estCT)=all_rownames #rename rows with all barcodes
+colnames(estCT)=all_colnames #rename columns with all detected cell types
+
+for (n in seq_along(CTest)) {
+  rn <- rownames(CTest[[n]])
+  cn <- colnames(CTest[[n]])
+  estCT[rn, cn] <- CTest[[n]]
+} #fill the empty matrix with all cell types proportions 
+
+fuldat=cbind(location,estCT) #add x and y coordinates to result matrix 
+
+write.csv(fuldat,paste0(out_dir,sample_name,"_deconvolution_matrix.csv")) #save deconvolution results dataframe
+
+fuldat <- fuldat %>%
+  mutate(across(all_of(all_colnames), as.numeric))
+
+
+if (!exists("colors") || is.null(colors)) {
+  cell_types <- names(all_markers) 
+  colors <- setNames(rainbow(length(cell_types)), cell_types)
+} #if colors parameter is not provided by user, default rainbow colors are used. 
+
+
+```
+
+```{r,scatter pie plot visualisation}
+pdf(paste0(out_dir,sample_name,"_deconvolution.pdf")) 
+ggplot() + geom_scatterpie(aes(x = x_pixel, y = y_pixel), data = fuldat,
+cols = all_colnames, pie_scale = 0.3, color = NA) + 
+coord_equal() + scale_fill_manual(values = colors) +
+theme(panel.background = element_blank(), plot.background =
+element_blank(), axis.text = element_blank(), axis.ticks =
+element_blank(), axis.title = element_blank(), strip.text =
+element_text(face = "bold", size = 12), legend.position = "right",
+legend.title = element_blank(), legend.text = element_text(size = 12,
+face = "bold")) 
+dev.off()
+```
+
+
+```{r, co-localisation matrix}
+# The score is defined as the ratio of the number of spatial spots where both cell types A and B are above a given threshold to the number of spots where at least one of them is above the threshold.
+#- spatial_deconv : deconvolution matrix spot X cell types proportion
+#- Type A : name of a cell type (string)
+#- Type B : name of a second cell type (string)
+#- Threshold : detection threshold for cell types A and B in the spots
+co_localization_score <- function(spatial_deconv, typeA, typeB, threshold) { 
+  SA <- as.numeric(spatial_deconv[[typeA]] >= threshold)
+  SB <- as.numeric(spatial_deconv[[typeB]] >= threshold)
+  numerator <- sum(SA == 1 & SB == 1)
+  denominator <- sum(SA == 1 | SB == 1)
+  if (denominator == 0) {
+    return(0.0)
+  }
+  return(numerator / denominator)
+}
+
+
+#Apply co-localisation score for all cell types using the co_localization_score function to generate co-localisation matrix
+#- spatial_deconv : deconvolution matrix spot X cell types proportion
+#- Threshold : detection threshold for cell types A and B in the spots, default is 0.0. 
+compute_score_matrix <- function(spatial_deconv, threshold = 0.0) { 
+  cell_types <- cell_type
+  score_mat <- matrix(0, nrow = length(cell_types), ncol = length(cell_types),
+                      dimnames = list(cell_types, cell_types))
+  for (i in cell_types) {
+    for (j in cell_types) {
+      score_mat[i, j] <- co_localization_score(spatial_deconv, i, j, threshold)
+    }
+  }
+  return(score_mat)
+}
+
+cell_type= names(markers)[which(names(markers) %in% colnames(fuldat))]
+
+score_matrix<-compute_score_matrix(fuldat, 0.1) #detection threshold recommended by authors for 10X Visium data
+
+pdf(paste0(out_dir,sample_name,"_co_loc_matrix.pdf"))
+pheatmap(score_matrix,
+         display_numbers = TRUE, 
+         cluster_rows = FALSE,
+         cluster_cols = FALSE,
+         color =colorRampPalette(c("white", "red"))(100),
+         main = "Co-localisation Score Matrix")
+
+dev.off()
+```
+
+
+
